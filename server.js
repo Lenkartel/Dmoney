@@ -63,11 +63,14 @@ function sendTelegramMessage(text){
 function callClaude(messages){
   return new Promise((resolve,reject)=>{
     const API_KEY = process.env.ANTHROPIC_API_KEY;
-    if(!API_KEY) return resolve({error:'API key manquante'});
+    if(!API_KEY){
+      console.error('[Claude] ANTHROPIC_API_KEY not set');
+      return resolve({error:'API key manquante'});
+    }
 
     const body = JSON.stringify({
-      model  : 'claude-haiku-4-5-20251001',   // fast + cheap for FAQ
-      max_tokens: 350,
+      model     : 'claude-haiku-4-5',   // correct model string
+      max_tokens: 400,
       system : `Tu es l'assistant virtuel de D-Money, service de prêt mobile au Djibouti.
 Tu réponds uniquement en français, de manière courte, claire et professionnelle.
 Tu connais ces informations sur D-Money :
@@ -116,15 +119,29 @@ Garde tes réponses sous 3 phrases maximum sauf si une explication détaillée e
         'Content-Length':Buffer.byteLength(body),
       },
     };
+
     const req = https.request(opts,(res)=>{
       let data='';
       res.on('data',c=>data+=c);
       res.on('end',()=>{
-        try{resolve(JSON.parse(data))}
-        catch(e){resolve({error:'Réponse invalide'})}
+        try{
+          const parsed = JSON.parse(data);
+          if(parsed.error){
+            console.error('[Claude] API error:',parsed.error.type, parsed.error.message);
+          }
+          resolve(parsed);
+        }catch(e){
+          console.error('[Claude] Parse error:',e.message,'raw:',data.slice(0,200));
+          resolve({error:'Réponse invalide'});
+        }
       });
     });
-    req.on('error',reject);req.write(body);req.end();
+    req.on('error',(e)=>{
+      console.error('[Claude] Request error:',e.message);
+      reject(e);
+    });
+    req.write(body);
+    req.end();
   });
 }
 
