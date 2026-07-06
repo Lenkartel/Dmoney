@@ -780,123 +780,262 @@ setTimeout(()=>{
 },200);
 
 /* ══════════════════════════════════════════
-   TAWK.TO + AI FAQ INTEGRATION
-   Loads config from server, injects widget,
-   intercepts messages for AI response first
+   D-MONEY AI FAQ — always-visible chat bubble
+   Works standalone; loads Tawk.to if configured
 ══════════════════════════════════════════ */
-(async function initChat(){
+(function initChat(){
 
-  /* 1 — fetch Tawk.to IDs from server */
-  let tawkCfg = null;
-  try{
-    const r = await fetch('/api/config');
-    const d = await r.json();
-    tawkCfg = d.tawkto;
-  }catch(e){
-    console.warn('[Chat] Config unavailable');
-    return;
+  /* ── BUILD CHAT UI ── */
+  const style = document.createElement('style');
+  style.textContent = `
+    .dm-fab{
+      position:fixed;bottom:max(24px,env(safe-area-inset-bottom));right:18px;
+      width:56px;height:56px;border-radius:50%;
+      background:linear-gradient(135deg,#FFD166,#F5A800);
+      box-shadow:0 4px 18px rgba(245,168,0,.45);
+      border:none;cursor:pointer;z-index:8000;
+      display:flex;align-items:center;justify-content:center;
+      transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+    }
+    .dm-fab:active{transform:scale(.9)}
+    .dm-fab svg{width:26px;height:26px;stroke:#1B2E6B;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .dm-badge{
+      position:absolute;top:-3px;right:-3px;
+      width:18px;height:18px;border-radius:50%;
+      background:#ef4444;border:2px solid #fff;
+      font-size:10px;font-weight:700;color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      opacity:0;transition:opacity .2s;
+    }
+    .dm-badge.show{opacity:1}
+    .dm-panel{
+      position:fixed;bottom:max(90px,calc(82px + env(safe-area-inset-bottom)));right:14px;
+      width:calc(100vw - 28px);max-width:340px;
+      background:#fff;border-radius:20px;
+      border:1.5px solid rgba(27,46,107,.1);
+      box-shadow:0 8px 40px rgba(27,46,107,.18);
+      z-index:8001;display:flex;flex-direction:column;
+      overflow:hidden;
+      transform:scale(.85) translateY(20px);opacity:0;
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1),opacity .2s;
+      pointer-events:none;max-height:72vh;
+    }
+    .dm-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:auto}
+    .dm-phead{
+      background:linear-gradient(135deg,#0F1D47,#1B2E6B);
+      padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;
+    }
+    .dm-avatar{
+      width:36px;height:36px;border-radius:50%;
+      background:rgba(245,168,0,.2);border:2px solid rgba(245,168,0,.4);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .dm-avatar img{width:24px;height:24px;object-fit:contain}
+    .dm-phead-info{}
+    .dm-phead-name{font-size:13px;font-weight:800;color:#fff;line-height:1.2}
+    .dm-phead-status{font-size:10px;color:rgba(255,255,255,.55);font-weight:500;margin-top:1px;display:flex;align-items:center;gap:4px}
+    .dm-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0}
+    .dm-close{margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.6);font-size:18px;line-height:1;padding:2px 4px}
+    .dm-msgs{flex:1;overflow-y:auto;padding:12px 12px 8px;display:flex;flex-direction:column;gap:8px;min-height:180px}
+    .dm-msgs::-webkit-scrollbar{display:none}
+    .dm-bubble{
+      max-width:82%;padding:9px 13px;border-radius:16px;
+      font-size:13px;font-weight:500;line-height:1.5;word-break:break-word;
+    }
+    .dm-bubble.bot{
+      background:#F0F4FA;color:#0F1D47;
+      border-bottom-left-radius:4px;align-self:flex-start;
+    }
+    .dm-bubble.user{
+      background:linear-gradient(135deg,#1B2E6B,#2A4090);
+      color:#fff;border-bottom-right-radius:4px;align-self:flex-end;
+    }
+    .dm-typing{display:flex;gap:4px;align-items:center;padding:10px 13px}
+    .dm-typing span{width:7px;height:7px;border-radius:50%;background:#9AAAD4;animation:dmDot 1.2s ease-in-out infinite}
+    .dm-typing span:nth-child(2){animation-delay:.2s}
+    .dm-typing span:nth-child(3){animation-delay:.4s}
+    @keyframes dmDot{0%,80%,100%{transform:scale(.7);opacity:.4}40%{transform:scale(1);opacity:1}}
+    .dm-footer{
+      display:flex;gap:8px;padding:10px 12px;
+      border-top:1px solid rgba(27,46,107,.08);flex-shrink:0;
+    }
+    .dm-input{
+      flex:1;border:1.5px solid rgba(27,46,107,.12);border-radius:999px;
+      padding:9px 14px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+      color:#0F1D47;background:#F7F9FC;outline:none;resize:none;
+      transition:border-color .18s,box-shadow .18s;
+    }
+    .dm-input:focus{border-color:#F5A800;box-shadow:0 0 0 3px rgba(245,168,0,.14);background:#fff}
+    .dm-send{
+      width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;
+      background:linear-gradient(135deg,#FFD166,#F5A800);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      transition:transform .18s cubic-bezier(.34,1.56,.64,1);
+    }
+    .dm-send:active{transform:scale(.88)}
+    .dm-send svg{width:16px;height:16px;stroke:#1B2E6B;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .dm-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px;flex-shrink:0}
+    .dm-chip{
+      font-size:11px;font-weight:600;color:#1B2E6B;
+      background:#FFF8E7;border:1.5px solid #FFEFC0;
+      padding:5px 10px;border-radius:999px;cursor:pointer;
+      transition:background .14s,transform .14s;white-space:nowrap;
+    }
+    .dm-chip:active{transform:scale(.94);background:#FFEFC0}
+  `;
+  document.head.appendChild(style);
+
+  /* ── FAB BUTTON ── */
+  const fab = document.createElement('button');
+  fab.className = 'dm-fab';
+  fab.innerHTML = `
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    <div class="dm-badge" id="dmBadge">1</div>
+  `;
+  document.body.appendChild(fab);
+
+  /* ── CHAT PANEL ── */
+  const panel = document.createElement('div');
+  panel.className = 'dm-panel';
+  panel.innerHTML = `
+    <div class="dm-phead">
+      <div class="dm-avatar"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
+      <div class="dm-phead-info">
+        <div class="dm-phead-name">Assistant D-Money</div>
+        <div class="dm-phead-status"><div class="dm-dot"></div>En ligne · Répond instantanément</div>
+      </div>
+      <button class="dm-close" id="dmClose">&#x2715;</button>
+    </div>
+    <div class="dm-msgs" id="dmMsgs"></div>
+    <div class="dm-suggestions" id="dmSuggestions"></div>
+    <div class="dm-footer">
+      <input class="dm-input" id="dmInput" type="text" placeholder="Posez votre question…" maxlength="300">
+      <button class="dm-send" id="dmSend"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+    </div>
+  `;
+  document.body.appendChild(panel);
+
+  /* ── STATE ── */
+  let open = false;
+  let history = [];
+  const suggestions = [
+    'Quels sont les taux ?',
+    'Montant maximum ?',
+    'Comment rembourser ?',
+    'Conditions requises ?',
+    'Délai de versement ?',
+  ];
+
+  /* ── HELPERS ── */
+  const msgsEl = document.getElementById('dmMsgs');
+  const inputEl = document.getElementById('dmInput');
+  const badge   = document.getElementById('dmBadge');
+  const suggEl  = document.getElementById('dmSuggestions');
+
+  function addBubble(text, who){
+    const b = document.createElement('div');
+    b.className = 'dm-bubble ' + who;
+    b.textContent = text;
+    msgsEl.appendChild(b);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return b;
   }
-  if(!tawkCfg) return; // Tawk.to not configured yet
 
-  /* 2 — conversation history for Claude */
-  const history = [];
-  let escalated = false;
+  function showTyping(){
+    const t = document.createElement('div');
+    t.className = 'dm-bubble bot dm-typing';
+    t.innerHTML = '<span></span><span></span><span></span>';
+    msgsEl.appendChild(t);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return t;
+  }
 
-  /* 3 — AI response via server */
-  async function askAI(userText){
-    history.push({role:'user', content:userText});
+  function renderSuggestions(items){
+    suggEl.innerHTML = '';
+    (items||[]).slice(0,4).forEach(s=>{
+      const c = document.createElement('button');
+      c.className = 'dm-chip'; c.textContent = s;
+      c.onclick = ()=>{ inputEl.value=s; send(); };
+      suggEl.appendChild(c);
+    });
+  }
+
+  function togglePanel(){
+    open = !open;
+    panel.classList.toggle('open', open);
+    badge.classList.remove('show');
+    if(open && msgsEl.children.length === 0){
+      setTimeout(()=>{
+        const t = showTyping();
+        setTimeout(()=>{
+          t.remove();
+          addBubble('Bonjour ! 👋 Je suis l\'assistant D-Money. Comment puis-je vous aider ?', 'bot');
+          renderSuggestions(suggestions);
+        }, 800);
+      }, 200);
+    }
+    if(open) setTimeout(()=>inputEl.focus(), 300);
+  }
+
+  fab.onclick = togglePanel;
+  document.getElementById('dmClose').onclick = togglePanel;
+
+  /* ── SEND ── */
+  async function send(){
+    const text = inputEl.value.trim();
+    if(!text) return;
+    inputEl.value = '';
+    suggEl.innerHTML = '';
+    addBubble(text, 'user');
+    history.push({role:'user', content:text});
+
+    const typing = showTyping();
+
     try{
       const r = await fetch('/api/chat',{
-        method :'POST',
+        method:'POST',
         headers:{'Content-Type':'application/json'},
-        body   : JSON.stringify({messages: history}),
+        body: JSON.stringify({messages: history.slice(-10)}),
       });
       const d = await r.json();
-      if(d.reply) history.push({role:'assistant', content:d.reply});
-      return d;
-    }catch(e){
-      return {reply:'Désolé, une erreur est survenue. Un conseiller va vous aider.', escalate:true};
-    }
-  }
-
-  /* 4 — keywords that skip AI and go straight to agent */
-  const AGENT_TRIGGERS = [
-    'agent','conseiller','humain','personne','aide','urgent',
-    'problème','erreur','plainte','remboursement','retard',
-  ];
-  function wantsAgent(txt){
-    const low = txt.toLowerCase();
-    return AGENT_TRIGGERS.some(w=>low.includes(w));
-  }
-
-  /* 5 — inject Tawk.to widget */
-  window.Tawk_API  = window.Tawk_API  || {};
-  window.Tawk_LoadStart = new Date();
-
-  /* Customise widget before it loads */
-  window.Tawk_API.onLoad = function(){
-    /* Set visitor info from loan state if available */
-    try{
-      const plan = document.getElementById('planTag')?.textContent || '';
-      const amt  = document.getElementById('headerPrice')?.textContent || '';
-      if(plan && amt){
-        Tawk_API.setAttributes({
-          'plan'  : plan,
-          'amount': amt + ' DJF',
-        }, function(err){});
+      typing.remove();
+      const reply = d.reply || 'Je suis désolé, je n\'ai pas pu traiter votre demande. Veuillez réessayer.';
+      addBubble(reply, 'bot');
+      history.push({role:'assistant', content:reply});
+      if(d.escalate){
+        setTimeout(()=>addBubble('Un conseiller va prendre le relais. Merci de patienter.','bot'),600);
+        loadTawkto();
       }
+    } catch(e){
+      typing.remove();
+      addBubble('Connexion impossible. Vérifiez votre internet et réessayez.', 'bot');
+    }
+  }
+
+  document.getElementById('dmSend').onclick = send;
+  inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()} });
+
+  /* ── SHOW BADGE AFTER 3s TO INVITE CLICK ── */
+  setTimeout(()=>{ if(!open) badge.classList.add('show'); }, 3000);
+
+  /* ── LOAD TAWK.TO IF CONFIGURED (for live agent handoff) ── */
+  async function loadTawkto(){
+    try{
+      const r = await fetch('/api/config');
+      const d = await r.json();
+      if(!d.tawkto) return;
+      window.Tawk_API = window.Tawk_API || {};
+      window.Tawk_LoadStart = new Date();
+      const s = document.createElement('script');
+      s.async=true; s.src=d.tawkto.src; s.charset='UTF-8';
+      s.setAttribute('crossorigin','*');
+      document.head.appendChild(s);
     }catch(e){}
+  }
 
-    /* greet visitor in widget */
-    Tawk_API.addEvent('page-loaded',{page:'loan-builder'},function(err){});
-  };
-
-  /* 6 — intercept chat messages for AI */
-  window.Tawk_API.onChatMessageVisitor = async function(message){
-    if(escalated) return; // already with live agent — don't intercept
-
-    const text = (message.message||'').trim();
-    if(!text) return;
-
-    /* show typing indicator */
-    Tawk_API.setAttributes({'ai-typing':'true'},function(){});
-
-    /* skip AI if user explicitly wants agent */
-    if(wantsAgent(text)){
-      escalated = true;
-      Tawk_API.setAttributes({'ai-typing':'false'},function(){});
-      return; // let Tawk handle it — agent notified
-    }
-
-    /* ask Claude */
-    const result = await askAI(text);
-
-    Tawk_API.setAttributes({'ai-typing':'false'},function(){});
-
-    if(result.reply){
-      /* send AI reply into chat as agent message */
-      Tawk_API.sendMessage(result.reply, function(err){
-        if(err) console.warn('[Chat] sendMessage error',err);
-      });
-    }
-
-    if(result.escalate){
-      escalated = true;
-      /* notify agents so they can take over */
-      Tawk_API.addEvent('ai-escalate',{reason:'user_request'},function(){});
-    }
-  };
-
-  /* 7 — load Tawk.to script */
-  const s = document.createElement('script');
-  s.async = true;
-  s.src   = tawkCfg.src;
-  s.charset = 'UTF-8';
-  s.setAttribute('crossorigin','*');
-  document.head.appendChild(s);
-
-  console.log('[Chat] Tawk.to + AI FAQ loaded ✓');
+  console.log('[D-Money Chat] FAQ assistant ready ✓');
 })();
+
 </script>
 </body>
 </html>
