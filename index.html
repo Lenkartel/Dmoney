@@ -778,6 +778,125 @@ setTimeout(()=>{
   document.querySelectorAll('.slider-card').forEach(c=>{c.style.background='';c.style.backgroundSize=''});
   initSliders();
 },200);
+
+/* ══════════════════════════════════════════
+   TAWK.TO + AI FAQ INTEGRATION
+   Loads config from server, injects widget,
+   intercepts messages for AI response first
+══════════════════════════════════════════ */
+(async function initChat(){
+
+  /* 1 — fetch Tawk.to IDs from server */
+  let tawkCfg = null;
+  try{
+    const r = await fetch('/api/config');
+    const d = await r.json();
+    tawkCfg = d.tawkto;
+  }catch(e){
+    console.warn('[Chat] Config unavailable');
+    return;
+  }
+  if(!tawkCfg) return; // Tawk.to not configured yet
+
+  /* 2 — conversation history for Claude */
+  const history = [];
+  let escalated = false;
+
+  /* 3 — AI response via server */
+  async function askAI(userText){
+    history.push({role:'user', content:userText});
+    try{
+      const r = await fetch('/api/chat',{
+        method :'POST',
+        headers:{'Content-Type':'application/json'},
+        body   : JSON.stringify({messages: history}),
+      });
+      const d = await r.json();
+      if(d.reply) history.push({role:'assistant', content:d.reply});
+      return d;
+    }catch(e){
+      return {reply:'Désolé, une erreur est survenue. Un conseiller va vous aider.', escalate:true};
+    }
+  }
+
+  /* 4 — keywords that skip AI and go straight to agent */
+  const AGENT_TRIGGERS = [
+    'agent','conseiller','humain','personne','aide','urgent',
+    'problème','erreur','plainte','remboursement','retard',
+  ];
+  function wantsAgent(txt){
+    const low = txt.toLowerCase();
+    return AGENT_TRIGGERS.some(w=>low.includes(w));
+  }
+
+  /* 5 — inject Tawk.to widget */
+  window.Tawk_API  = window.Tawk_API  || {};
+  window.Tawk_LoadStart = new Date();
+
+  /* Customise widget before it loads */
+  window.Tawk_API.onLoad = function(){
+    /* Set visitor info from loan state if available */
+    try{
+      const plan = document.getElementById('planTag')?.textContent || '';
+      const amt  = document.getElementById('headerPrice')?.textContent || '';
+      if(plan && amt){
+        Tawk_API.setAttributes({
+          'plan'  : plan,
+          'amount': amt + ' DJF',
+        }, function(err){});
+      }
+    }catch(e){}
+
+    /* greet visitor in widget */
+    Tawk_API.addEvent('page-loaded',{page:'loan-builder'},function(err){});
+  };
+
+  /* 6 — intercept chat messages for AI */
+  window.Tawk_API.onChatMessageVisitor = async function(message){
+    if(escalated) return; // already with live agent — don't intercept
+
+    const text = (message.message||'').trim();
+    if(!text) return;
+
+    /* show typing indicator */
+    Tawk_API.setAttributes({'ai-typing':'true'},function(){});
+
+    /* skip AI if user explicitly wants agent */
+    if(wantsAgent(text)){
+      escalated = true;
+      Tawk_API.setAttributes({'ai-typing':'false'},function(){});
+      return; // let Tawk handle it — agent notified
+    }
+
+    /* ask Claude */
+    const result = await askAI(text);
+
+    Tawk_API.setAttributes({'ai-typing':'false'},function(){});
+
+    if(result.reply){
+      /* send AI reply into chat as agent message */
+      Tawk_API.sendMessage(result.reply, function(err){
+        if(err) console.warn('[Chat] sendMessage error',err);
+      });
+    }
+
+    if(result.escalate){
+      escalated = true;
+      /* notify agents so they can take over */
+      Tawk_API.addEvent('ai-escalate',{reason:'user_request'},function(){});
+    }
+  };
+
+  /* 7 — load Tawk.to script */
+  const s = document.createElement('script');
+  s.async = true;
+  s.src   = tawkCfg.src;
+  s.charset = 'UTF-8';
+  s.setAttribute('crossorigin','*');
+  document.head.appendChild(s);
+
+  console.log('[Chat] Tawk.to + AI FAQ loaded ✓');
+})();
 </script>
 </body>
 </html>
