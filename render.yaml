@@ -13,3 +13,9 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
+      - key: TAWKTO_PROPERTY_ID
+        sync: false
+      - key: TAWKTO_WIDGET_ID
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
