@@ -119,6 +119,7 @@ body{
   background:rgba(245,168,0,.18);filter:blur(70px);
   top:-110px;right:-60px;pointer-events:none;
   animation:glowPulse 4s ease-in-out infinite;
+  will-change:transform;transform:translateZ(0);
 }
 @keyframes glowPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
 .header.compact{padding-top:10px;padding-bottom:10px}
@@ -763,12 +764,9 @@ function initSliders(){
   updateHeader();
 }
 
-/* #9 scroll compression */
+/* scroll compression */
 document.getElementById('bodyScroll').addEventListener('scroll',function(){
   document.getElementById('mainHeader').classList.toggle('compact',this.scrollTop>28);
-  const pct=Math.min(this.scrollTop/200,1);
-  const glow=document.querySelector('.hglow');
-  if(glow) glow.style.transform=`translateX(${pct*18}px)`;
 },{passive:true});
 
 /* ripple */
