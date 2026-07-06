@@ -115,13 +115,14 @@ body{
 }
 @keyframes hdrSweep{0%,100%{left:-100%}55%{left:150%}}
 .hglow{
-  position:absolute;width:240px;height:240px;border-radius:50%;
-  background:rgba(245,168,0,.18);filter:blur(70px);
-  top:-110px;right:-60px;pointer-events:none;
+  position:fixed;width:280px;height:280px;border-radius:50%;
+  background:rgba(245,168,0,.16);filter:blur(80px);
+  top:-60px;right:-80px;pointer-events:none;
+  will-change:opacity;
   animation:glowPulse 4s ease-in-out infinite;
-  will-change:transform;transform:translateZ(0);
+  z-index:0;
 }
-@keyframes glowPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes glowPulse{0%,100%{opacity:.55}50%{opacity:.9}}
 .header.compact{padding-top:10px;padding-bottom:10px}
 .header.compact .hdr-amount{font-size:26px}
 .header.compact .hdr-price-block{margin-bottom:6px}
@@ -464,9 +465,10 @@ input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1
 </div>
 
 <div class="screen" id="screen">
+  <div class="hglow"></div>
+
   <!-- HEADER -->
   <div class="header" id="mainHeader">
-    <div class="hglow"></div>
     <div class="header-top">
       <div class="brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
       <div class="hdr-plan-tag" id="planTag">30 Jours</div>
