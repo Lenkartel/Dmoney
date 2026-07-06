@@ -61,11 +61,7 @@ body{
 
 /* HEADER */
 .header{background:linear-gradient(135deg,var(--navy-dark),var(--navy) 50%,var(--navy-mid));padding:max(14px,env(safe-area-inset-top)) 18px 20px;flex-shrink:0;position:relative;overflow:hidden}
-.header::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 260px 200px at 108% -18%,rgba(245,168,0,.2),transparent 65%),linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:auto,32px 32px,32px 32px}
-.header::after{content:'';position:absolute;top:0;left:-100%;width:55%;height:100%;background:linear-gradient(90deg,transparent,rgba(245,168,0,.05),transparent);animation:hdrSweep 9s ease-in-out infinite;pointer-events:none}
-@keyframes hdrSweep{0%,100%{left:-100%}55%{left:150%}}
-.hglow{position:fixed;width:280px;height:280px;border-radius:50%;background:rgba(245,168,0,.14);filter:blur(80px);top:-60px;right:-80px;pointer-events:none;will-change:opacity;animation:glowPulse 4s ease-in-out infinite;z-index:0}
-@keyframes glowPulse{0%,100%{opacity:.55}50%{opacity:.9}}
+.header::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 220px 180px at 108% -10%,rgba(245,168,0,.32),transparent 60%),linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:auto,32px 32px,32px 32px}
 .header-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;margin-bottom:16px}
 .brand{display:flex;align-items:center;background:rgba(255,255,255,.95);padding:5px 10px;border-radius:10px;backdrop-filter:blur(8px)}
 .brand img{height:28px;object-fit:contain}
@@ -264,8 +260,6 @@ input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 4p
 </div>
 
 <div class="screen" id="screen">
-  <div class="hglow"></div>
-
   <div class="header">
     <div class="header-top">
       <div class="brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
