@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="theme-color" content="#F5A800"/>
+<title>Prêt Rapide · D-Money</title>
+<link rel="icon" href="assets/dmoney-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+:root{
+  --gold:#F5A800;
+  --gold-dark:#D4900A;
+  --gold-light:#FFD166;
+  --gold-pale:#FFF8E7;
+  --gold-mid:#FFEFC0;
+  --navy:#1B2E6B;
+  --navy-dark:#0F1D47;
+  --navy-mid:#2A4090;
+  --white:#FFFFFF;
+  --page:#F7F9FC;
+  --border:rgba(27,46,107,.1);
+  --border-strong:rgba(27,46,107,.2);
+  --ink:#0F1D47;
+  --ink-mid:#2A4090;
+  --ink-soft:#5A6FA8;
+  --ink-faint:#9AAAD4;
+  --font:'Inter',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --r:12px;--r-lg:18px;--r-xl:24px;
+  --shadow:0 2px 8px rgba(27,46,107,.08),0 8px 32px rgba(27,46,107,.08),0 0 0 1px rgba(255,255,255,.7) inset;
+  --shadow-gold:0 4px 20px rgba(245,168,0,.3),0 2px 8px rgba(245,168,0,.2);
+  --glass:rgba(255,255,255,.78);
+  --glass-b:rgba(255,255,255,.92);
+}
+
+@keyframes pageEnter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pageExit{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-10px)}}
+.screen{animation:pageEnter .34s cubic-bezier(.22,1,.36,1) both}
+.screen.exit{animation:pageExit .24s cubic-bezier(.4,0,1,1) forwards}
+
+html,body{width:100%;height:100%;height:100dvh;overflow:hidden;font-family:var(--font)}
+body{
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(245,168,0,.12),transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 30%,rgba(27,46,107,.07),transparent 50%),
+    #F7F9FC;
+}
+.screen{
+  display:flex;flex-direction:column;
+  width:100%;height:100%;height:100dvh;
+  overflow:hidden;position:relative;isolation:isolate;
+}
+.screen::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+}
+
+/* ── CURTAIN ─────────────────────────────── */
+.curtain{
+  position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:linear-gradient(155deg,#0F1D47,#1B2E6B 55%,#2A4090);
+  opacity:0;transition:opacity .22s ease;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.curtain::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 300px 250px at 80% 15%,rgba(245,168,0,.2),transparent 65%);
+}
+.curtain-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.cp{position:absolute;border-radius:50%;background:rgba(245,168,0,.2);animation:cpFloat linear infinite}
+@keyframes cpFloat{0%{transform:translateY(0);opacity:.2}50%{opacity:.35}100%{transform:translateY(-100vh) scale(.5);opacity:0}}
+.curtain-brand{
+  position:relative;z-index:1;background:rgba(255,255,255,.95);
+  padding:10px 18px;border-radius:14px;display:flex;align-items:center;gap:0;
+  margin-bottom:36px;box-shadow:0 4px 24px rgba(0,0,0,.22);
+  animation:cIn .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes cIn{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
+.curtain-brand img{height:38px;object-fit:contain}
+.curtain-spinner{position:relative;z-index:1;width:52px;height:52px;margin-bottom:24px;animation:cIn .3s .06s cubic-bezier(.34,1.56,.64,1) both}
+.curtain-spinner svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.curtain-status{position:relative;z-index:1;text-align:center;animation:cIn .28s .12s ease both}
+.curtain-label{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.2px;margin-bottom:5px;transition:opacity .2s}
+.curtain-sub{font-size:12px;font-weight:500;color:rgba(255,255,255,.5);transition:opacity .2s}
+.curtain-dots{display:flex;gap:6px;margin-top:24px;position:relative;z-index:1;animation:cIn .28s .16s ease both}
+.cdot{height:6px;border-radius:999px;background:rgba(255,255,255,.2);width:6px;transition:background .28s,width .28s cubic-bezier(.34,1.56,.64,1)}
+.cdot.on{background:var(--gold);width:18px}
+.cdot.done{background:rgba(245,168,0,.5)}
+.curtain.show{opacity:1;pointer-events:auto}
+
+/* ── HEADER ──────────────────────────────── */
+.header{
+  background:linear-gradient(135deg,var(--navy-dark),var(--navy) 50%,var(--navy-mid));
+  padding:max(14px,env(safe-area-inset-top)) 18px 18px;
+  flex-shrink:0;position:relative;overflow:hidden;
+}
+.header::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 280px 200px at 105% -15%,rgba(245,168,0,.22),transparent 60%),
+    linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:auto,32px 32px,32px 32px;
+}
+.header::after{
+  content:'';position:absolute;top:0;left:-100%;width:55%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(245,168,0,.06),transparent);
+  animation:hdrSweep 9s ease-in-out infinite;pointer-events:none;
+}
+@keyframes hdrSweep{0%,100%{left:-100%}55%{left:150%}}
+.hglow{
+  position:absolute;width:240px;height:240px;border-radius:50%;
+  background:rgba(245,168,0,.18);filter:blur(70px);
+  top:-110px;right:-60px;pointer-events:none;
+  animation:glowPulse 4s ease-in-out infinite;
+}
+@keyframes glowPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.header.compact{padding-top:10px;padding-bottom:10px}
+.header.compact .hdr-amount{font-size:26px}
+.header.compact .hdr-price-block{margin-bottom:6px}
+
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;z-index:2}
+.brand{display:flex;align-items:center;background:rgba(255,255,255,.95);padding:5px 10px;border-radius:10px;backdrop-filter:blur(8px)}
+.brand img{height:28px;object-fit:contain}
+.hdr-plan-tag{
+  padding:4px 12px;border-radius:999px;
+  background:rgba(245,168,0,.18);border:1px solid rgba(245,168,0,.4);
+  backdrop-filter:blur(8px);
+  font-size:10px;font-weight:700;color:var(--gold-light);
+  text-transform:uppercase;letter-spacing:.5px;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+}
+.hdr-plan-tag.pop{transform:scale(1.08)}
+
+.hdr-price-block{position:relative;z-index:2;margin-bottom:12px;transition:margin .28s}
+.hdr-label{font-size:9px;font-weight:600;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:2px}
+.hdr-price-row{display:flex;align-items:flex-end;gap:5px}
+.hdr-cur{font-family:var(--mono);font-size:11px;font-weight:600;color:rgba(255,255,255,.45);margin-bottom:5px;font-feature-settings:"tnum"}
+.hdr-amount{
+  font-family:var(--mono);font-size:40px;font-weight:900;color:#fff;line-height:1;
+  letter-spacing:-.04em;font-feature-settings:"tnum","ss01";
+  text-shadow:0 2px 16px rgba(245,168,0,.35);
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1);
+}
+.hdr-amount.bump{transform:scale(1.04)}
+
+/* mini bars */
+.mini-bars{display:flex;gap:12px;position:relative;z-index:2}
+.mbi{flex:1}
+.mbi-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.mbi-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px}
+.mbi-val{font-family:var(--mono);font-size:9px;font-weight:700;color:rgba(255,255,255,.65);font-feature-settings:"tnum"}
+.mbi-track{height:4px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden}
+.mbi-fill{height:100%;border-radius:999px;transition:width .3s cubic-bezier(.4,0,.2,1)}
+.mbi-fill.dur{background:linear-gradient(90deg,var(--gold),var(--gold-light))}
+.mbi-fill.amt{background:linear-gradient(90deg,#4ade80,#22d3ee)}
+.mbi-fill.rate{background:linear-gradient(90deg,#f472b6,#a78bfa)}
+
+/* ── LOAN PICKER ─────────────────────────── */
+.plan-picker{
+  background:var(--glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-bottom:1px solid rgba(27,46,107,.08);
+  padding:10px 12px 0;flex-shrink:0;position:relative;z-index:2;
+  box-shadow:0 4px 18px rgba(27,46,107,.05);
+}
+.picker-row{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 10px;margin-top:-8px;scrollbar-width:none}
+.picker-row::-webkit-scrollbar{display:none}
+.plan-pill{
+  flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 14px 9px;border-radius:var(--r-lg);cursor:pointer;
+  border:1.5px solid var(--border);background:rgba(255,255,255,.7);
+  backdrop-filter:blur(8px);outline:none;user-select:none;-webkit-user-select:none;
+  position:relative;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .14s,border-color .14s,box-shadow .14s;
+}
+.plan-pill:active{transform:scale(.92)}
+.pp-name{font-size:12px;font-weight:700;color:var(--ink-soft);white-space:nowrap;line-height:1}
+.pp-rate{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--ink-faint);white-space:nowrap;line-height:1;font-feature-settings:"tnum";transition:color .18s,opacity .18s}
+.plan-pill.active{
+  background:var(--navy);border-color:transparent;
+  box-shadow:0 0 0 1px rgba(255,255,255,.12) inset,0 2px 14px rgba(27,46,107,.38),0 0 22px rgba(245,168,0,.15);
+}
+.plan-pill.active .pp-name{color:#fff}
+.plan-pill.active .pp-rate{color:var(--gold-light);opacity:.9}
+.plan-pill.active::after{
+  content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:2.5px;
+  background:linear-gradient(90deg,rgba(245,168,0,.6),var(--gold),rgba(245,168,0,.6));
+  border-radius:999px;box-shadow:0 0 6px rgba(245,168,0,.5);
+}
+.pp-hot{
+  position:absolute;top:-6px;right:-5px;
+  width:17px;height:17px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-gold);
+  font-size:9px;
+}
+
+/* ── BODY ────────────────────────────────── */
+.body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:16px 16px max(96px,calc(82px + env(safe-area-inset-bottom)));
+  overscroll-behavior:contain;min-height:0;
+  transform:translateZ(0);position:relative;z-index:1;
+  scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent;
+}
+.body::-webkit-scrollbar{width:3px}
+.body::-webkit-scrollbar-track{background:transparent}
+.body::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:999px}
+
+.plan-panel{position:absolute;visibility:hidden;opacity:0;pointer-events:none;top:0;left:0;right:0;transition:opacity .16s ease}
+.plan-panel.active{position:static;visibility:visible;opacity:1;pointer-events:auto}
+
+/* panel head */
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.panel-title{font-size:20px;font-weight:900;color:var(--ink);letter-spacing:-.5px;line-height:1.1}
+.panel-badge{
+  font-family:var(--mono);font-size:11px;color:var(--navy);font-weight:600;font-feature-settings:"tnum";
+  background:var(--gold-pale);border:1px solid var(--gold-mid);padding:3px 10px;border-radius:999px;
+}
+.popular-banner{
+  display:flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,#FFF8E7,#FFEFC0);
+  border:1.5px solid var(--gold-mid);border-radius:var(--r);
+  padding:9px 14px;margin-bottom:14px;
+  font-size:12px;font-weight:700;color:var(--gold-dark);
+  box-shadow:0 2px 9px rgba(245,168,0,.14);
+}
+
+/* ── SLIDER CARDS ────────────────────────── */
+.slider-card{
+  background:var(--glass);
+  backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1.5px solid var(--glass-b);border-radius:var(--r-lg);
+  padding:16px;margin-bottom:10px;
+  box-shadow:var(--shadow);
+  position:relative;overflow:hidden;transform:translateZ(0);
+  transition:box-shadow .18s ease,transform .18s cubic-bezier(.34,1.56,.64,1);
+}
+.slider-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
+}
+.dur-card{background:linear-gradient(160deg,rgba(255,248,231,.85),rgba(255,255,255,.72))}
+.dur-card::before{background:linear-gradient(90deg,var(--gold),var(--gold-light))}
+.amt-card{background:linear-gradient(160deg,rgba(240,253,244,.85),rgba(255,255,255,.72))}
+.amt-card::before{background:linear-gradient(90deg,#22c55e,#06b6d4)}
+.rate-card{background:linear-gradient(160deg,rgba(250,240,255,.85),rgba(255,255,255,.72))}
+.rate-card::before{background:linear-gradient(90deg,#a855f7,#ec4899)}
+
+.slider-card.dragging{}
+.dur-card.dragging{box-shadow:var(--shadow),0 0 0 2px rgba(245,168,0,.3),0 4px 20px rgba(245,168,0,.2)}
+.amt-card.dragging{box-shadow:var(--shadow),0 0 0 2px rgba(34,197,94,.25),0 4px 20px rgba(34,197,94,.15)}
+.rate-card.dragging{box-shadow:var(--shadow),0 0 0 2px rgba(168,85,247,.25),0 4px 20px rgba(168,85,247,.15)}
+
+.sc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sc-left{display:flex;align-items:center;gap:12px}
+.sc-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:9px}
+.sc-icon svg{width:100%;height:100%;stroke:currentColor}
+.dur-card .sc-icon{background:linear-gradient(135deg,#FFF8E7,#FFEFC0);box-shadow:0 2px 8px rgba(245,168,0,.2);color:var(--gold-dark)}
+.amt-card .sc-icon{background:linear-gradient(135deg,#f0fdf4,#dcfce7);box-shadow:0 2px 8px rgba(34,197,94,.15);color:#16a34a}
+.rate-card .sc-icon{background:linear-gradient(135deg,#faf0ff,#f3e8ff);box-shadow:0 2px 8px rgba(168,85,247,.15);color:#9333ea}
+.sc-name{font-size:14px;font-weight:800;color:var(--ink);letter-spacing:-.15px;line-height:1.2}
+.sc-hint{font-size:11px;color:var(--ink-soft);font-weight:500;margin-top:1px}
+.sc-val{
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  color:var(--navy);background:var(--gold-pale);
+  border:1px solid var(--gold-mid);
+  padding:5px 12px;border-radius:999px;
+  white-space:nowrap;min-width:80px;text-align:center;
+  font-feature-settings:"tnum","ss01";
+  transition:transform .14s cubic-bezier(.34,1.56,.64,1);
+}
+.sc-val.bump{transform:scale(1.1)}
+
+/* range */
+input[type=range]{
+  width:100%;height:6px;border-radius:999px;
+  appearance:none;-webkit-appearance:none;
+  outline:none;cursor:pointer;background:var(--gold-mid);display:block;
+}
+input[type=range]::-webkit-slider-thumb{
+  appearance:none;-webkit-appearance:none;
+  width:24px;height:24px;border-radius:50%;
+  background:#fff;border:2.5px solid;cursor:grab;
+  box-shadow:0 2px 10px rgba(27,46,107,.18),0 0 0 3px rgba(255,255,255,.4);
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1),box-shadow .16s;
+}
+input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1.22);box-shadow:0 4px 16px rgba(27,46,107,.25),0 0 0 5px rgba(255,255,255,.45)}
+.dur-card input::-webkit-slider-thumb{border-color:var(--gold)}
+.amt-card input::-webkit-slider-thumb{border-color:#22c55e}
+.rate-card input::-webkit-slider-thumb{border-color:#a855f7}
+.sc-limits{display:flex;justify-content:space-between;font-size:9px;font-weight:600;color:var(--ink-faint);margin-top:7px;letter-spacing:.04em;text-transform:uppercase}
+
+/* tooltip */
+.slider-wrap{position:relative}
+.slider-tip{
+  position:absolute;top:-32px;
+  background:var(--navy);color:#fff;
+  font-family:var(--mono);font-size:11px;font-weight:700;
+  padding:4px 9px;border-radius:7px;white-space:nowrap;
+  pointer-events:none;opacity:0;
+  transform:translateX(-50%) scale(.85);
+  transition:opacity .14s,transform .14s cubic-bezier(.34,1.56,.64,1);
+  font-feature-settings:"tnum";
+}
+.slider-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--navy)}
+.slider-tip.show{opacity:1;transform:translateX(-50%) scale(1)}
+
+/* ── LOAN SUMMARY BOX ────────────────────── */
+.loan-box{
+  background:linear-gradient(135deg,rgba(255,248,231,.95),rgba(255,239,192,.85));
+  backdrop-filter:blur(16px);border:1.5px solid var(--gold-mid);
+  border-radius:var(--r-lg);padding:16px;
+  margin-bottom:12px;box-shadow:var(--shadow-gold);
+}
+.loan-box-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.loan-box-row:last-child{margin-bottom:0;padding-top:10px;border-top:1px solid var(--gold-mid)}
+.lb-key{font-size:12px;font-weight:600;color:var(--ink-soft)}
+.lb-val{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--navy);font-feature-settings:"tnum","ss01"}
+.lb-total-key{font-size:13px;font-weight:700;color:var(--navy)}
+.lb-total-val{font-family:var(--mono);font-size:22px;font-weight:900;color:var(--navy);font-feature-settings:"tnum","ss01";letter-spacing:-.02em}
+
+/* ── APPLY BUTTON ────────────────────────── */
+.apply-btn{
+  width:100%;padding:17px;border-radius:var(--r-lg);
+  border:none;cursor:pointer;
+  font-family:var(--font);font-size:15px;font-weight:900;
+  color:var(--navy);letter-spacing:-.1px;
+  background:linear-gradient(135deg,var(--gold-light),var(--gold));
+  box-shadow:var(--shadow-gold);
+  position:relative;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .18s,filter .14s;
+}
+.apply-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,transparent 55%);pointer-events:none}
+.apply-btn:active{transform:scale(.96);filter:brightness(.93)}
+.ripple-el{position:absolute;border-radius:50%;pointer-events:none;background:rgba(27,46,107,.15);transform:scale(0);animation:rippleAnim .55s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+
+/* ── SECURITY ────────────────────────────── */
+.security-strip{
+  display:flex;align-items:center;justify-content:center;
+  padding:12px 0 4px;border-top:1px solid var(--border);margin-top:6px;
+}
+.sec-badge{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;color:#059669;letter-spacing:.3px;text-transform:uppercase;padding:0 12px}
+.sec-badge+.sec-badge{border-left:1px solid var(--border)}
+.sec-badge svg{opacity:.75;stroke:#059669}
+
+/* ── MODAL ───────────────────────────────── */
+.modal-overlay{
+  position:absolute;inset:0;
+  background:rgba(15,29,71,.52);backdrop-filter:blur(7px);
+  display:none;align-items:flex-end;z-index:100;
+}
+.modal-overlay.open{display:flex}
+.modal-sheet{
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(32px) saturate(200%);
+  width:100%;border-radius:24px 24px 0 0;
+  border-top:1.5px solid rgba(255,255,255,.9);
+  padding-bottom:max(28px,env(safe-area-inset-bottom));
+  animation:sheetUp .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 -4px 40px rgba(15,29,71,.16);
+}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+.sheet-grip{width:38px;height:5px;background:rgba(27,46,107,.15);border-radius:3px;margin:14px auto 0}
+.sheet-hdr{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sheet-title{font-size:17px;font-weight:900;color:var(--ink);letter-spacing:-.3px}
+.sheet-x{width:30px;height:30px;border-radius:50%;background:var(--gold-pale);border:none;cursor:pointer;font-size:14px;color:var(--ink-soft);font-weight:700;display:flex;align-items:center;justify-content:center;transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+.sheet-x:active{transform:scale(.87)}
+.sheet-body{padding:16px 20px 0}
+.sheet-lbl{font-size:9px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.9px;margin-bottom:8px}
+.sheet-rows{background:rgba(247,249,252,.8);border-radius:var(--r-lg);border:1.5px solid var(--border);overflow:hidden;margin-bottom:12px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.srow:last-child{border-bottom:none}
+.srow-k{font-size:13px;color:var(--ink-soft);font-weight:500;display:flex;align-items:center;gap:7px}
+.srow-k::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--border-strong)}
+.srow-v{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);font-feature-settings:"tnum"}
+.sheet-total{
+  background:linear-gradient(135deg,rgba(255,248,231,.95),rgba(255,239,192,.85));
+  border:1.5px solid var(--gold-mid);border-radius:var(--r-lg);
+  padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;box-shadow:var(--shadow-gold);
+}
+.stotal-l{font-size:13px;font-weight:700;color:var(--ink-mid)}
+.stotal-v{font-family:var(--mono);font-size:23px;font-weight:900;color:var(--navy);font-feature-settings:"tnum","ss01";letter-spacing:-.02em}
+.sheet-btns{display:flex;gap:9px}
+.btn-cancel{flex:1;padding:15px;border-radius:var(--r-lg);border:1.5px solid var(--border);background:rgba(255,255,255,.8);font-family:var(--font);font-size:14px;font-weight:700;color:var(--ink-soft);cursor:pointer;transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+.btn-cancel:active{transform:scale(.95)}
+.btn-confirm{
+  flex:2;padding:15px;border-radius:var(--r-lg);border:none;
+  background:linear-gradient(135deg,var(--gold-light),var(--gold));
+  font-family:var(--font);font-size:14px;font-weight:900;color:var(--navy);cursor:pointer;
+  box-shadow:var(--shadow-gold);position:relative;overflow:hidden;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+}
+.btn-confirm:active{transform:scale(.95)}
+
+/* toast */
+.toast{
+  position:absolute;top:20px;left:50%;
+  transform:translateX(-50%) translateY(-12px);
+  background:rgba(15,29,71,.9);backdrop-filter:blur(16px);color:#fff;
+  padding:10px 22px;border-radius:999px;
+  font-size:13px;font-weight:700;letter-spacing:-.1px;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s cubic-bezier(.34,1.56,.64,1);
+  z-index:200;white-space:nowrap;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(15,29,71,.28);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* session toast */
+.session-toast{
+  position:absolute;bottom:max(110px,calc(96px + env(safe-area-inset-bottom)));
+  left:16px;right:16px;
+  background:linear-gradient(135deg,#FFF8E7,#FFEFC0);
+  border:1.5px solid var(--gold-mid);border-radius:var(--r-lg);
+  padding:12px 16px;z-index:180;
+  display:none;align-items:center;gap:10px;
+  box-shadow:0 4px 20px rgba(245,168,0,.2);
+  animation:sessionIn .24s cubic-bezier(.34,1.56,.64,1);
+}
+.session-toast.show{display:flex}
+@keyframes sessionIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.session-toast svg{flex-shrink:0;stroke:var(--gold-dark)}
+.session-toast-text{font-size:12px;font-weight:700;color:var(--gold-dark)}
+
+.powered{text-align:center;padding:12px 0 4px;font-size:9px;color:var(--ink-faint);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<!-- CURTAIN -->
+<div class="curtain" id="curtain">
+  <div class="curtain-particles" id="curtainParticles"></div>
+  <div class="curtain-brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
+  <div class="curtain-spinner">
+    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+      <circle cx="26" cy="26" r="21" stroke="rgba(255,255,255,.13)" stroke-width="3"/>
+      <path d="M26 5a21 21 0 0 1 21 21" stroke="var(--gold)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M26 5a21 21 0 0 1 10.5 3.1" stroke="rgba(245,168,0,.5)" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="curtain-status">
+    <div class="curtain-label" id="cLabel">Chargement</div>
+    <div class="curtain-sub" id="cSub">Connexion à D-Money…</div>
+  </div>
+  <div class="curtain-dots">
+    <div class="cdot on" id="cd0"></div>
+    <div class="cdot" id="cd1"></div>
+    <div class="cdot" id="cd2"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen">
+  <!-- HEADER -->
+  <div class="header" id="mainHeader">
+    <div class="hglow"></div>
+    <div class="header-top">
+      <div class="brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
+      <div class="hdr-plan-tag" id="planTag">30 Jours</div>
+    </div>
+    <div class="hdr-price-block">
+      <div class="hdr-label">Montant du prêt</div>
+      <div class="hdr-price-row">
+        <span class="hdr-cur">DJF</span>
+        <span class="hdr-amount" id="headerPrice">0</span>
+      </div>
+    </div>
+    <div class="mini-bars">
+      <div class="mbi">
+        <div class="mbi-top"><div class="mbi-lbl">Durée</div><div class="mbi-val" id="durBarVal">—</div></div>
+        <div class="mbi-track"><div class="mbi-fill dur" id="durBar" style="width:100%"></div></div>
+      </div>
+      <div class="mbi">
+        <div class="mbi-top"><div class="mbi-lbl">Montant</div><div class="mbi-val" id="amtBarVal">—</div></div>
+        <div class="mbi-track"><div class="mbi-fill amt" id="amtBar" style="width:100%"></div></div>
+      </div>
+      <div class="mbi">
+        <div class="mbi-top"><div class="mbi-lbl">Intérêt</div><div class="mbi-val" id="rateBarVal">—</div></div>
+        <div class="mbi-track"><div class="mbi-fill rate" id="rateBar" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOAN TYPE PICKER -->
+  <div class="plan-picker">
+    <div class="picker-row">
+      <button class="plan-pill active" data-key="30j"   onclick="switchPlan('30j')"><span class="pp-name">30 Jours</span><span class="pp-rate" id="pp-30j">2%</span></button>
+      <button class="plan-pill" data-key="60j"   onclick="switchPlan('60j')"><span class="pp-name">60 Jours</span><span class="pp-rate" id="pp-60j">3.5%</span></button>
+      <button class="plan-pill" data-key="90j"   onclick="switchPlan('90j')"><span class="pp-name">90 Jours</span><span class="pp-rate" id="pp-90j">5%</span></button>
+      <button class="plan-pill" data-key="180j"  onclick="switchPlan('180j')">
+        <span class="pp-name">180 Jours</span>
+        <span class="pp-rate" id="pp-180j">8%</span>
+        <div class="pp-hot">🔥</div>
+      </button>
+      <button class="plan-pill" data-key="365j"  onclick="switchPlan('365j')"><span class="pp-name">365 Jours</span><span class="pp-rate" id="pp-365j">12%</span></button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body" id="bodyScroll">
+    <div class="plan-panel active" id="panel-30j">
+      <div class="panel-head"><div class="panel-title">30 Jours</div><div class="panel-badge">Taux 2%</div></div>
+      <div class="slider-card dur-card" id="card-dur-30j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sc-name">Durée du prêt</div><div class="sc-hint">Nombre de jours</div></div></div><div class="sc-val" id="sdur-30j">30 Jours</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-dur-30j"></div><input type="range" id="sr-dur-30j" min="0" max="100" value="100" oninput="onSlide('30j','dur',this)"></div>
+        <div class="sc-limits"><span>Min</span><span>Max</span></div>
+      </div>
+      <div class="slider-card amt-card" id="card-amt-30j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sc-name">Montant souhaité</div><div class="sc-hint">En Francs Djiboutiens</div></div></div><div class="sc-val" id="samt-30j">50 000 DJF</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-amt-30j"></div><input type="range" id="sr-amt-30j" min="0" max="100" value="100" oninput="onSlide('30j','amt',this)"></div>
+        <div class="sc-limits"><span>1 000 DJF</span><span>50 000 DJF</span></div>
+      </div>
+      <div class="loan-box">
+        <div class="loan-box-row"><span class="lb-key">Durée sélectionnée</span><span class="lb-val" id="lb-dur-30j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Montant du prêt</span><span class="lb-val" id="lb-amt-30j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Intérêts (2%)</span><span class="lb-val" id="lb-int-30j">—</span></div>
+        <div class="loan-box-row"><span class="lb-total-key">Total à rembourser</span><span class="lb-total-val" id="lb-total-30j">—</span></div>
+      </div>
+      <button class="apply-btn" id="applyBtn-30j" onclick="applyLoan('30j')">Demander ce prêt</button>
+      <div class="security-strip"><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Sécurisé 256-bit</div><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Certifié PCI DSS</div></div>
+      <div class="powered">Propulsé par D-Money · Digital Mobile Money</div>
+    </div>
+
+    <div class="plan-panel" id="panel-60j">
+      <div class="panel-head"><div class="panel-title">60 Jours</div><div class="panel-badge">Taux 3.5%</div></div>
+      <div class="slider-card dur-card" id="card-dur-60j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sc-name">Durée du prêt</div><div class="sc-hint">Nombre de jours</div></div></div><div class="sc-val" id="sdur-60j">60 Jours</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-dur-60j"></div><input type="range" id="sr-dur-60j" min="0" max="100" value="100" oninput="onSlide('60j','dur',this)"></div>
+        <div class="sc-limits"><span>Min</span><span>Max</span></div>
+      </div>
+      <div class="slider-card amt-card" id="card-amt-60j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sc-name">Montant souhaité</div><div class="sc-hint">En Francs Djiboutiens</div></div></div><div class="sc-val" id="samt-60j">100 000 DJF</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-amt-60j"></div><input type="range" id="sr-amt-60j" min="0" max="100" value="100" oninput="onSlide('60j','amt',this)"></div>
+        <div class="sc-limits"><span>1 000 DJF</span><span>100 000 DJF</span></div>
+      </div>
+      <div class="loan-box">
+        <div class="loan-box-row"><span class="lb-key">Durée sélectionnée</span><span class="lb-val" id="lb-dur-60j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Montant du prêt</span><span class="lb-val" id="lb-amt-60j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Intérêts (3.5%)</span><span class="lb-val" id="lb-int-60j">—</span></div>
+        <div class="loan-box-row"><span class="lb-total-key">Total à rembourser</span><span class="lb-total-val" id="lb-total-60j">—</span></div>
+      </div>
+      <button class="apply-btn" id="applyBtn-60j" onclick="applyLoan('60j')">Demander ce prêt</button>
+      <div class="security-strip"><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Sécurisé 256-bit</div><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Certifié PCI DSS</div></div>
+      <div class="powered">Propulsé par D-Money · Digital Mobile Money</div>
+    </div>
+
+    <div class="plan-panel" id="panel-90j">
+      <div class="panel-head"><div class="panel-title">90 Jours</div><div class="panel-badge">Taux 5%</div></div>
+      <div class="slider-card dur-card" id="card-dur-90j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sc-name">Durée du prêt</div><div class="sc-hint">Nombre de jours</div></div></div><div class="sc-val" id="sdur-90j">90 Jours</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-dur-90j"></div><input type="range" id="sr-dur-90j" min="0" max="100" value="100" oninput="onSlide('90j','dur',this)"></div>
+        <div class="sc-limits"><span>Min</span><span>Max</span></div>
+      </div>
+      <div class="slider-card amt-card" id="card-amt-90j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sc-name">Montant souhaité</div><div class="sc-hint">En Francs Djiboutiens</div></div></div><div class="sc-val" id="samt-90j">150 000 DJF</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-amt-90j"></div><input type="range" id="sr-amt-90j" min="0" max="100" value="100" oninput="onSlide('90j','amt',this)"></div>
+        <div class="sc-limits"><span>2 000 DJF</span><span>150 000 DJF</span></div>
+      </div>
+      <div class="loan-box">
+        <div class="loan-box-row"><span class="lb-key">Durée sélectionnée</span><span class="lb-val" id="lb-dur-90j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Montant du prêt</span><span class="lb-val" id="lb-amt-90j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Intérêts (5%)</span><span class="lb-val" id="lb-int-90j">—</span></div>
+        <div class="loan-box-row"><span class="lb-total-key">Total à rembourser</span><span class="lb-total-val" id="lb-total-90j">—</span></div>
+      </div>
+      <button class="apply-btn" id="applyBtn-90j" onclick="applyLoan('90j')">Demander ce prêt</button>
+      <div class="security-strip"><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Sécurisé 256-bit</div><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Certifié PCI DSS</div></div>
+      <div class="powered">Propulsé par D-Money · Digital Mobile Money</div>
+    </div>
+
+    <div class="plan-panel" id="panel-180j">
+      <div class="panel-head"><div class="panel-title">180 Jours</div><div class="panel-badge">Taux 8%</div></div>
+      <div class="popular-banner"><svg width="14" height="14" viewBox="0 0 24 24" fill="#D4900A" stroke="none"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg> Le plus demandé — équilibre durée/intérêt</div>
+      <div class="slider-card dur-card" id="card-dur-180j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sc-name">Durée du prêt</div><div class="sc-hint">Nombre de jours</div></div></div><div class="sc-val" id="sdur-180j">180 Jours</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-dur-180j"></div><input type="range" id="sr-dur-180j" min="0" max="100" value="100" oninput="onSlide('180j','dur',this)"></div>
+        <div class="sc-limits"><span>Min</span><span>Max</span></div>
+      </div>
+      <div class="slider-card amt-card" id="card-amt-180j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sc-name">Montant souhaité</div><div class="sc-hint">En Francs Djiboutiens</div></div></div><div class="sc-val" id="samt-180j">250 000 DJF</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-amt-180j"></div><input type="range" id="sr-amt-180j" min="0" max="100" value="100" oninput="onSlide('180j','amt',this)"></div>
+        <div class="sc-limits"><span>5 000 DJF</span><span>250 000 DJF</span></div>
+      </div>
+      <div class="loan-box">
+        <div class="loan-box-row"><span class="lb-key">Durée sélectionnée</span><span class="lb-val" id="lb-dur-180j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Montant du prêt</span><span class="lb-val" id="lb-amt-180j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Intérêts (8%)</span><span class="lb-val" id="lb-int-180j">—</span></div>
+        <div class="loan-box-row"><span class="lb-total-key">Total à rembourser</span><span class="lb-total-val" id="lb-total-180j">—</span></div>
+      </div>
+      <button class="apply-btn" id="applyBtn-180j" onclick="applyLoan('180j')">Demander ce prêt</button>
+      <div class="security-strip"><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Sécurisé 256-bit</div><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Certifié PCI DSS</div></div>
+      <div class="powered">Propulsé par D-Money · Digital Mobile Money</div>
+    </div>
+
+    <div class="plan-panel" id="panel-365j">
+      <div class="panel-head"><div class="panel-title">365 Jours</div><div class="panel-badge">Taux 12%</div></div>
+      <div class="slider-card dur-card" id="card-dur-365j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="sc-name">Durée du prêt</div><div class="sc-hint">Nombre de jours</div></div></div><div class="sc-val" id="sdur-365j">365 Jours</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-dur-365j"></div><input type="range" id="sr-dur-365j" min="0" max="100" value="100" oninput="onSlide('365j','dur',this)"></div>
+        <div class="sc-limits"><span>Min</span><span>Max</span></div>
+      </div>
+      <div class="slider-card amt-card" id="card-amt-365j">
+        <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sc-name">Montant souhaité</div><div class="sc-hint">En Francs Djiboutiens</div></div></div><div class="sc-val" id="samt-365j">500 000 DJF</div></div>
+        <div class="slider-wrap"><div class="slider-tip" id="tip-amt-365j"></div><input type="range" id="sr-amt-365j" min="0" max="100" value="100" oninput="onSlide('365j','amt',this)"></div>
+        <div class="sc-limits"><span>5 000 DJF</span><span>500 000 DJF</span></div>
+      </div>
+      <div class="loan-box">
+        <div class="loan-box-row"><span class="lb-key">Durée sélectionnée</span><span class="lb-val" id="lb-dur-365j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Montant du prêt</span><span class="lb-val" id="lb-amt-365j">—</span></div>
+        <div class="loan-box-row"><span class="lb-key">Intérêts (12%)</span><span class="lb-val" id="lb-int-365j">—</span></div>
+        <div class="loan-box-row"><span class="lb-total-key">Total à rembourser</span><span class="lb-total-val" id="lb-total-365j">—</span></div>
+      </div>
+      <button class="apply-btn" id="applyBtn-365j" onclick="applyLoan('365j')">Demander ce prêt</button>
+      <div class="security-strip"><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Sécurisé 256-bit</div><div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Certifié PCI DSS</div></div>
+      <div class="powered">Propulsé par D-Money · Digital Mobile Money</div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+    <div class="modal-sheet">
+      <div class="sheet-grip"></div>
+      <div class="sheet-hdr">
+        <div class="sheet-title">Confirmer votre prêt</div>
+        <button class="sheet-x" onclick="closeModal()">&#x2715;</button>
+      </div>
+      <div class="sheet-body">
+        <div class="sheet-lbl">Détails du prêt</div>
+        <div class="sheet-rows" id="sheetRows"></div>
+        <div class="sheet-total">
+          <div class="stotal-l">Total à rembourser</div>
+          <div class="stotal-v" id="modalTotal">0 DJF</div>
+        </div>
+        <div class="sheet-btns">
+          <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+          <button class="btn-confirm" onclick="confirmLoan()">Confirmer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="session-toast" id="sessionToast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div class="session-toast-text">Session expire bientôt — veuillez confirmer votre prêt</div>
+  </div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ── HAPTICS ── */
+function haptic(s){
+  if(!navigator.vibrate)return;
+  var p={select:8,light:12,medium:22,heavy:40,success:[12,60,12],warning:[30,50,30],error:[50,40,50]};
+  try{navigator.vibrate(p[s]||12)}catch(e){}
+}
+
+/* ── DATA ── */
+const plans={
+  '30j' :{label:'30 Jours', days:30,  minAmt:1000,  maxAmt:50000,  rate:2},
+  '60j' :{label:'60 Jours', days:60,  minAmt:1000,  maxAmt:100000, rate:3.5},
+  '90j' :{label:'90 Jours', days:90,  minAmt:2000,  maxAmt:150000, rate:5},
+  '180j':{label:'180 Jours',days:180, minAmt:5000,  maxAmt:250000, rate:8},
+  '365j':{label:'365 Jours',days:365, minAmt:5000,  maxAmt:500000, rate:12},
+};
+const state={};
+Object.keys(plans).forEach(k=>{state[k]={dur:100,amt:100}});
+let activeKey='30j',pendingKey=null;
+
+function fmt(n){return Math.round(n).toLocaleString('fr-DJ')+' DJF'}
+function calcAmt(k){const p=plans[k],s=state[k];return p.minAmt+(p.maxAmt-p.minAmt)*(s.amt/100)}
+function calcInterest(k){return calcAmt(k)*plans[k].rate/100}
+function calcTotal(k){return calcAmt(k)+calcInterest(k)}
+function calcDays(k){const p=plans[k],s=state[k];return Math.round(p.days*(s.dur/100))||1}
+
+function fillSlider(el,color){
+  const pct=((el.value-el.min)/(el.max-el.min)*100);
+  el.style.background=`linear-gradient(to right,${color} ${pct}%,var(--gold-mid) ${pct}%)`;
+}
+function bump(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');setTimeout(()=>el.classList.remove('bump'),220)}
+
+function updateTip(tipId,el,val){
+  const tip=document.getElementById(tipId);if(!tip)return;
+  tip.textContent=val;
+  const pct=(el.value-el.min)/(el.max-el.min);
+  const left=pct*(el.offsetWidth-24)+12;
+  tip.style.left=left+'px';
+  tip.classList.add('show');
+}
+
+function onSlide(k,type,el){
+  state[k][type]=Number(el.value);
+  const cols={dur:'#F5A800',amt:'#22c55e',rate:'#a855f7'};
+  fillSlider(el,cols[type]);
+  const card=document.getElementById('card-'+type+'-'+k);
+  if(card) card.classList.add('dragging');
+  if(type==='dur') updateTip('tip-dur-'+k,el,calcDays(k)+' jours');
+  if(type==='amt') updateTip('tip-amt-'+k,el,fmt(calcAmt(k)));
+  updateCard(k);
+  if(k===activeKey) updateHeader();
+  haptic('select');
+}
+document.addEventListener('pointerup',()=>{
+  document.querySelectorAll('.slider-card.dragging').forEach(c=>c.classList.remove('dragging'));
+  document.querySelectorAll('.slider-tip.show').forEach(t=>t.classList.remove('show'));
+},{passive:true});
+
+function updateCard(k){
+  const days=calcDays(k),amt=calcAmt(k),interest=calcInterest(k),total=calcTotal(k);
+  const sd=document.getElementById('sdur-'+k);if(sd){sd.textContent=days+' Jours';bump('sdur-'+k)}
+  const sa=document.getElementById('samt-'+k);if(sa){sa.textContent=fmt(amt);bump('samt-'+k)}
+  const ld=document.getElementById('lb-dur-'+k);if(ld) ld.textContent=days+' Jours';
+  const la=document.getElementById('lb-amt-'+k);if(la) la.textContent=fmt(amt);
+  const li=document.getElementById('lb-int-'+k);if(li) li.textContent=fmt(interest);
+  const lt=document.getElementById('lb-total-'+k);if(lt){lt.textContent=fmt(total);bump('lb-total-'+k)}
+  const pp=document.getElementById('pp-'+k);if(pp) pp.textContent=plans[k].rate+'%';
+}
+
+function updateHeader(){
+  const k=activeKey,p=plans[k];
+  document.getElementById('headerPrice').textContent=Math.round(calcAmt(k)).toLocaleString('fr-DJ');
+  bump('headerPrice');
+  const tag=document.getElementById('planTag');tag.textContent=p.label;tag.classList.remove('pop');void tag.offsetWidth;tag.classList.add('pop');setTimeout(()=>tag.classList.remove('pop'),280);
+  document.getElementById('durBar').style.width=state[k].dur+'%';
+  document.getElementById('amtBar').style.width=state[k].amt+'%';
+  document.getElementById('rateBar').style.width=(plans[k].rate/12*100)+'%';
+  document.getElementById('durBarVal').textContent=calcDays(k)+' j';
+  document.getElementById('amtBarVal').textContent=Math.round(calcAmt(k)/1000)+'k';
+  document.getElementById('rateBarVal').textContent=plans[k].rate+'%';
+}
+
+function switchPlan(k){
+  if(k===activeKey)return;
+  document.getElementById('panel-'+activeKey).classList.remove('active');
+  activeKey=k;
+  document.getElementById('panel-'+k).classList.add('active');
+  document.getElementById('bodyScroll').scrollTop=0;
+  document.querySelectorAll('.plan-pill').forEach(p=>p.classList.toggle('active',p.dataset.key===k));
+  updateHeader();
+  haptic('light');
+}
+
+function initSliders(){
+  const cols={dur:'#F5A800',amt:'#22c55e'};
+  Object.keys(plans).forEach(k=>{
+    ['dur','amt'].forEach(t=>{
+      const el=document.getElementById('sr-'+t+'-'+k);
+      if(el) fillSlider(el,cols[t]);
+    });
+    updateCard(k);
+  });
+  updateHeader();
+}
+
+/* #9 scroll compression */
+document.getElementById('bodyScroll').addEventListener('scroll',function(){
+  document.getElementById('mainHeader').classList.toggle('compact',this.scrollTop>28);
+  const pct=Math.min(this.scrollTop/200,1);
+  const glow=document.querySelector('.hglow');
+  if(glow) glow.style.transform=`translateX(${pct*18}px)`;
+},{passive:true});
+
+/* ripple */
+function addRipple(btn,e){
+  const r=btn.getBoundingClientRect();
+  const size=Math.max(r.width,r.height)*2;
+  const x=e.clientX-r.left-size/2,y=e.clientY-r.top-size/2;
+  const rip=document.createElement('span');rip.className='ripple-el';
+  rip.style.cssText=`width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+  btn.appendChild(rip);rip.addEventListener('animationend',()=>rip.remove());
+}
+document.querySelectorAll('.apply-btn,.btn-confirm,.plan-pill').forEach(btn=>{
+  btn.addEventListener('pointerdown',e=>addRipple(btn,e),{passive:true});
+});
+
+function applyLoan(k){
+  pendingKey=k;
+  document.getElementById('sheetRows').innerHTML=`
+    <div class="srow"><span class="srow-k">Durée</span><span class="srow-v">${calcDays(k)} Jours</span></div>
+    <div class="srow"><span class="srow-k">Montant</span><span class="srow-v">${fmt(calcAmt(k))}</span></div>
+    <div class="srow"><span class="srow-k">Taux d'intérêt</span><span class="srow-v">${plans[k].rate}%</span></div>
+    <div class="srow"><span class="srow-k">Intérêts</span><span class="srow-v">${fmt(calcInterest(k))}</span></div>`;
+  document.getElementById('modalTotal').textContent=fmt(calcTotal(k));
+  document.getElementById('modal').classList.add('open');
+  haptic('medium');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+function handleOverlayClick(e){if(e.target===document.getElementById('modal'))closeModal()}
+
+function confirmLoan(){
+  if(!pendingKey)return;
+  const k=pendingKey;
+  sessionStorage.setItem('loanData',JSON.stringify({
+    plan:plans[k].label,days:calcDays(k),
+    amount:Math.round(calcAmt(k)),interest:Math.round(calcInterest(k)),
+    total:Math.round(calcTotal(k)),rate:plans[k].rate
+  }));
+  closeModal();haptic('success');navigate('login.html');
+}
+
+/* curtain particles */
+(function(){
+  const wrap=document.getElementById('curtainParticles');
+  for(let i=0;i<14;i++){
+    const el=document.createElement('div');el.className='cp';
+    const s=3+Math.random()*5;
+    el.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:${Math.random()*30}%;animation-duration:${5+Math.random()*8}s;animation-delay:${Math.random()*4}s`;
+    wrap.appendChild(el);
+  }
+})();
+
+function navigate(url){
+  const curtain=document.getElementById('curtain');
+  const label=document.getElementById('cLabel');
+  const sub=document.getElementById('cSub');
+  const dots=[document.getElementById('cd0'),document.getElementById('cd1'),document.getElementById('cd2')];
+  const steps=[
+    {l:'Chargement',   s:'Connexion à D-Money…',         d:0},
+    {l:'Vérification', s:'Validation de votre demande…',  d:1},
+    {l:'Traitement',   s:'Préparation du dossier…',       d:2},
+  ];
+  function setStep(i){
+    label.style.opacity='0';sub.style.opacity='0';
+    setTimeout(()=>{label.textContent=steps[i].l;sub.textContent=steps[i].s;label.style.opacity='1';sub.style.opacity='1'},130);
+    dots.forEach((d,j)=>d.className='cdot'+(j===steps[i].d?' on':j<steps[i].d?' done':''));
+  }
+  document.getElementById('screen').classList.add('exit');
+  curtain.classList.add('show');
+  setStep(0);setTimeout(()=>setStep(1),500);setTimeout(()=>setStep(2),1050);
+  setTimeout(()=>{window.location.href=url},1600);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg><span>${msg}</span>`;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* session timeout */
+let _sessionTimer;
+function resetSessionTimer(){
+  clearTimeout(_sessionTimer);
+  document.getElementById('sessionToast').classList.remove('show');
+  _sessionTimer=setTimeout(()=>{
+    document.getElementById('sessionToast').classList.add('show');
+    haptic('warning');
+    setTimeout(()=>document.getElementById('sessionToast').classList.remove('show'),6000);
+  },3*60*1000);
+}
+['pointerdown','scroll','keydown'].forEach(e=>document.addEventListener(e,resetSessionTimer,{passive:true}));
+resetSessionTimer();
+
+/* history */
+history.replaceState({page:'index'},'','');
+window.addEventListener('popstate',()=>{},{passive:true});
+
+/* skeleton → init */
+document.querySelectorAll('.slider-card').forEach(c=>{
+  c.style.animation='shimmer 1.4s ease infinite';
+  c.style.background='linear-gradient(90deg,rgba(255,239,192,.6) 25%,rgba(255,255,255,.9) 50%,rgba(255,239,192,.6) 75%)';
+  c.style.backgroundSize='200% 100%';
+});
+setTimeout(()=>{
+  document.querySelectorAll('.slider-card').forEach(c=>{c.style.animation='';c.style.background='';c.style.backgroundSize=''});
+  initSliders();
+},220);
+</script>
+</body>
+</html>
