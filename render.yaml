@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: dmoney-loan-builder
+    name: dmoney-package-builder
     runtime: node
     plan: starter
     buildCommand: npm install
@@ -12,16 +12,6 @@ services:
       - key: TELEGRAM_TOKEN
         sync: false
       - key: TELEGRAM_CHAT_ID
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: TAWKTO_PROPERTY_ID
-        sync: false
-      - key: TAWKTO_WIDGET_ID
-        sync: false
-      - key: TAWKTO_PROPERTY_ID
-        sync: false
-      - key: TAWKTO_WIDGET_ID
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
