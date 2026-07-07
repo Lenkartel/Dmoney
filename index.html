@@ -740,12 +740,14 @@ setTimeout(initSliders,200);
     const typing=showTyping();
     try{
       const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history.slice(-10)})});
-      const d=await r.json();typing.remove();
-      const reply=d.reply||'Désolé, je n\'ai pas pu traiter votre demande.';
-      addBubble(reply,'bot');history.push({role:'assistant',content:reply});
+      const d=await r.json();
+      typing.remove();
+      const reply=d.reply||'Je n\'ai pas pu obtenir de réponse. Réessayez.';
+      addBubble(reply,'bot');
+      history.push({role:'assistant',content:reply});
     }catch(e){
       typing.remove();
-      addBubble('Connexion impossible. Vérifiez votre internet.','bot');
+      addBubble('Connexion au serveur impossible. Vérifiez votre internet.','bot');
     }
   }
 
