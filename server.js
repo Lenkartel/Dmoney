@@ -292,6 +292,26 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+/* ── GET /api/test-claude — debug endpoint ── */
+app.get('/api/test-claude', async (req, res) => {
+  const API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!API_KEY) {
+    return res.json({ ok: false, error: 'ANTHROPIC_API_KEY not set' });
+  }
+  try {
+    const result = await callClaude([{ role: 'user', content: 'Say hello in one word.' }]);
+    res.json({
+      ok: !result.error,
+      model: result.model,
+      reply: result.content?.[0]?.text || null,
+      error: result.error || null,
+      raw: result,
+    });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 /* ── GET /health ── */
 app.get('/health', (req, res) => {
   res.json({
