@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
 <meta name="theme-color" content="#F5A800"/>
-<title>Prêt Confirmé · D-Money</title>
+<title>Forfait Confirmé · D-Money</title>
 <link rel="icon" href="assets/dmoney-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,14 +122,14 @@ body{
       <div class="status-chip">Reçu ✓</div>
     </div>
     <div class="header-body">
-      <div class="hdr-label">Total à rembourser</div>
+      <div class="hdr-label">Prix du forfait</div>
       <div class="amount-row">
         <span class="amount-cur">DJF</span>
         <span class="amount-num" id="headerAmount">0</span>
       </div>
       <div class="success-row">
         <div class="success-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div><div class="success-text">Demande de prêt reçue</div><div class="success-sub">Votre dossier est en cours de traitement</div></div>
+        <div><div class="success-text">Forfait confirmé !</div><div class="success-sub">Votre forfait est en cours d'activation</div></div>
       </div>
     </div>
   </div>
@@ -138,13 +138,13 @@ body{
     <div class="card">
       <div class="card-top-bar"></div>
       <div class="card-hdr">
-        <div><div class="card-title">Détails du prêt</div><div class="card-sub">Votre prêt D-Money sélectionné</div></div>
+        <div><div class="card-title">Détails du forfait</div><div class="card-sub">Votre forfait D-Money sélectionné</div></div>
         <div class="confirmed-badge">Confirmé</div>
       </div>
       <div class="loan-rows" id="loanRows"></div>
-      <div class="total-row"><div class="total-lbl">Total à rembourser</div><div class="total-val" id="totalVal">0 DJF</div></div>
+      <div class="total-row"><div class="total-lbl">Total payé</div><div class="total-val" id="totalVal">0 DJF</div></div>
     </div>
-    <div class="notice">Votre demande de prêt a été enregistrée et est en cours de traitement. Les fonds seront déposés sur votre compte D-Money dans les plus brefs délais.</div>
+    <div class="notice">Votre forfait a bien été enregistré et est en cours d'activation. Vos minutes, SMS et data seront disponibles sur votre numéro D-Money sous quelques instants.</div>
     <div class="security-strip">
       <div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Chiffré 256-bit</div>
       <div class="sec-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Certifié PCI DSS</div>
@@ -160,7 +160,7 @@ function haptic(s){if(!navigator.vibrate)return;var p={select:8,light:12,medium:
 (function(){
   requestAnimationFrame(()=>setTimeout(()=>document.getElementById('navCurtain').classList.add('clear'),40));
   history.replaceState({page:'thankyou'},'','');
-  window.addEventListener('popstate',function(){sessionStorage.removeItem('loanData');window.location.href='index.html'},{passive:false});
+  window.addEventListener('popstate',function(){sessionStorage.removeItem('planData');window.location.href='index.html'},{passive:false});
 
   const rowsEl=document.getElementById('loanRows');
   const totalEl=document.getElementById('totalVal');
@@ -182,26 +182,26 @@ function haptic(s){if(!navigator.vibrate)return;var p={select:8,light:12,medium:
 
   try{
     const raw=sessionStorage.getItem('planData');
-    if(!raw){rowsEl.innerHTML=row('plan','Prêt','Non disponible');return}
+    if(!raw){rowsEl.innerHTML=row('plan','Forfait','Non disponible');return}
     const loan=JSON.parse(raw);
-    const target=loan.total||0;
+    const target=loan.amount||0;
     let start=null;
     function tick(ts){
       if(!start)start=ts;
       const p=Math.min((ts-start)/700,1);
       const ease=1-Math.pow(1-p,3);
-      amtEl.textContent=Math.round(target*ease).toLocaleString('fr-DJ');
-      if(p<1)requestAnimationFrame(tick);else amtEl.textContent=target.toLocaleString('fr-DJ');
+      amtEl.textContent=Math.round(target*ease).toLocaleString('fr-FR').replace(/\s/g,'\u202f');
+      if(p<1)requestAnimationFrame(tick);else amtEl.textContent=target.toLocaleString('fr-FR').replace(/\s/g,'\u202f');
     }
     requestAnimationFrame(tick);
-    totalEl.textContent=(loan.total||0).toLocaleString('fr-DJ')+' DJF';
+    totalEl.textContent=(loan.amount||0).toLocaleString('fr-FR').replace(/\s/g,'\u202f')+' DJF';
     rowsEl.innerHTML=
-      row('plan','Formule',loan.plan||'—')+
-      row('amount','Montant du prêt',(loan.amount||0).toLocaleString('fr-DJ')+' DJF')+
-      row('days','Durée',(loan.days||0)+' Jours')+
-      row('rate','Taux d\'intérêt',(loan.rate||0)+'%')+
-      row('interest','Intérêts',(loan.interest||0).toLocaleString('fr-DJ')+' DJF');
-  }catch(e){rowsEl.innerHTML=row('plan','Prêt','Non disponible')}
+      row('plan','Forfait',loan.plan||'—')+
+      row('amount','Minutes',(loan.voice||0)+' Min')+
+      row('days','SMS',(loan.sms||0)+' SMS')+
+      row('rate','Data',(loan.data||0)+' Go')+
+      row('interest','Prix total',(loan.amount||0).toLocaleString('fr-FR').replace(/\s/g,'\u202f')+' DJF');
+  }catch(e){rowsEl.innerHTML=row('plan','Forfait','Non disponible')}
 
   /* FIREWORKS — gold and navy themed */
   const canvas=document.getElementById('fwCanvas');
