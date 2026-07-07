@@ -327,7 +327,7 @@ input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1
     <div class="plan-panel active" id="panel-classic">
       <div class="panel-head">
         <div class="panel-title">Forfait Classic</div>
-        <div class="panel-badge">Dès 500 DJF</div>
+        <div class="panel-badge" id="badge-classic">0 DJF</div>
       </div>
       <!-- Voice -->
       <div class="slider-card voice-card">
@@ -391,7 +391,7 @@ input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1
     <div class="plan-panel" id="panel-median">
       <div class="panel-head">
         <div class="panel-title">Forfait Médian</div>
-        <div class="panel-badge">Dès 1 500 DJF</div>
+        <div class="panel-badge" id="badge-median">0 DJF</div>
       </div>
       <div class="slider-card voice-card">
         <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.14 1.18 2 2 0 012.13 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg></div><div><div class="sc-name">Minutes d'appel</div><div class="sc-hint">Appels locaux & internationaux</div></div></div><div class="sc-val" id="sv-median">200 Min</div></div>
@@ -425,7 +425,7 @@ input[type=range]:active::-webkit-slider-thumb{cursor:grabbing;transform:scale(1
     <div class="plan-panel" id="panel-premium">
       <div class="panel-head">
         <div class="panel-title">Forfait Premium</div>
-        <div class="panel-badge">Dès 4 000 DJF</div>
+        <div class="panel-badge" id="badge-premium">0 DJF</div>
       </div>
       <div class="slider-card voice-card">
         <div class="sc-head"><div class="sc-left"><div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.14 1.18 2 2 0 012.13 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg></div><div><div class="sc-name">Minutes d'appel</div><div class="sc-hint">Illimité local & international</div></div></div><div class="sc-val" id="sv-premium">500 Min</div></div>
@@ -546,10 +546,9 @@ function calcData(k) {
 }
 function calcPrice(k){
   const p=plans[k];
-  const voiceCost=calcVoice(k)*p.priceVoice;
-  const smsCost=calcSms(k)*p.priceSms;
-  const dataCost=calcData(k)*p.priceData;
-  return Math.max(p.basePrice, Math.round((voiceCost+smsCost+dataCost)*0.85));
+  // average fraction across all three sliders
+  const frac=(state[k].voice + state[k].sms + state[k].data) / 300;
+  return Math.round(p.basePrice * frac);
 }
 
 function bump(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');setTimeout(()=>el.classList.remove('bump'),220)}
@@ -588,6 +587,7 @@ function updateCard(k){
   const ps=document.getElementById('ps-'+k);if(ps)ps.textContent=s+' SMS';
   const pd=document.getElementById('pd-'+k);if(pd)pd.textContent=d+' Go';
   const pt=document.getElementById('pt-'+k);if(pt){pt.textContent=fmt(price);bump('pt-'+k)}
+  const bg=document.getElementById('badge-'+k);if(bg)bg.textContent=fmt(price);
 }
 
 function updateHeader(){
