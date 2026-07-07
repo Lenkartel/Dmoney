@@ -181,7 +181,7 @@ function haptic(s){if(!navigator.vibrate)return;var p={select:8,light:12,medium:
   }
 
   try{
-    const raw=sessionStorage.getItem('loanData');
+    const raw=sessionStorage.getItem('planData');
     if(!raw){rowsEl.innerHTML=row('plan','Prêt','Non disponible');return}
     const loan=JSON.parse(raw);
     const target=loan.total||0;
